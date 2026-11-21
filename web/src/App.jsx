@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { Capacitor } from '@capacitor/core';
+import { SpeechRecognition } from '@capacitor-community/speech-recognition';
+
 import { buildContext } from './lib/context.js';
 import {
   createCharacterPack,
@@ -70,6 +73,17 @@ const timeLabel = (iso) => {
 };
 
 const firstChar = (name) => String(name || '?').slice(0, 1);
+
+const voiceErrorMessage = (error) => {
+  const text = String(error?.message ?? error ?? '');
+  if (text === '2' || /client side/i.test(text)) {
+    return '语音引擎还没准备好，请再点一次麦克风';
+  }
+  if (/no selected voice/i.test(text)) {
+    return '当前手机没有语音识别服务，可以改用输入法的麦克风';
+  }
+  return `语音输入失败：${text || '未知错误'}`;
+};
 
 const stripDayLabel = (text) =>
   String(text ?? '').replace(
@@ -170,6 +184,10 @@ export default function App() {
   const bottomRef = useRef(null);
   const chatScrollRef = useRef(null);
   const [showJump, setShowJump] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
+  const voiceBaseRef = useRef('');
+  const webRecognitionRef = useRef(null);
 
   const config = useMemo(
     () => ({
@@ -280,6 +298,40 @@ export default function App() {
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined;
+    let disposed = false;
+    let partialHandle;
+    let stateHandle;
+
+    (async () => {
+      try {
+        partialHandle = await SpeechRecognition.addListener(
+          'partialResults',
+          (data) => {
+            if (disposed) return;
+            const text = data.matches?.[0] ?? '';
+            if (text) setDraft(`${voiceBaseRef.current}${text}`);
+          },
+        );
+        stateHandle = await SpeechRecognition.addListener(
+          'listeningState',
+          (data) => {
+            if (!disposed) setListening(data.status === 'started');
+          },
+        );
+      } catch {
+        // Native speech recognition is unavailable; the Web Speech fallback is used.
+      }
+    })();
+
+    return () => {
+      disposed = true;
+      partialHandle?.remove();
+      stateHandle?.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -732,6 +784,94 @@ export default function App() {
 
   const stop = () => abortRef.current?.abort();
 
+  const stopVoice = async () => {
+    setListening(false);
+    if (webRecognitionRef.current) {
+      webRecognitionRef.current.stop();
+      webRecognitionRef.current = null;
+    }
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await SpeechRecognition.stop();
+      } catch {
+        // Ignore stop errors when the native recognizer is not running.
+      }
+    }
+  };
+
+  const startVoice = async () => {
+    setVoiceError('');
+    voiceBaseRef.current = draft ? `${draft} ` : '';
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const permission = await SpeechRecognition.requestPermissions();
+        if (permission.speechRecognition !== 'granted') {
+          setVoiceError('需要麦克风权限才能语音输入');
+          return;
+        }
+        const { available } = await SpeechRecognition.available();
+        if (!available) {
+          setVoiceError('当前设备没有可用的语音识别服务');
+          return;
+        }
+        setListening(true);
+        const result = await SpeechRecognition.start({
+          language: 'zh-CN',
+          maxResults: 1,
+          partialResults: false,
+          popup: true,
+          prompt: '请说话',
+        });
+        const match = result?.matches?.[0];
+        if (match) setDraft(`${voiceBaseRef.current}${match}`);
+        setListening(false);
+      } catch (voiceException) {
+        setListening(false);
+        setVoiceError(voiceErrorMessage(voiceException));
+      }
+      return;
+    }
+
+    const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!WebSpeech) {
+      setVoiceError('当前设备不支持语音输入');
+      return;
+    }
+    try {
+      const recognition = new WebSpeech();
+      recognition.lang = 'zh-CN';
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.onresult = (event) => {
+        let text = '';
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          text += event.results[index][0].transcript;
+        }
+        setDraft(`${voiceBaseRef.current}${text}`);
+      };
+      recognition.onerror = (event) => {
+        setVoiceError(`语音输入失败：${event.error || '未知错误'}`);
+        setListening(false);
+      };
+      recognition.onend = () => {
+        setListening(false);
+        webRecognitionRef.current = null;
+      };
+      webRecognitionRef.current = recognition;
+      setListening(true);
+      recognition.start();
+    } catch (voiceException) {
+      setListening(false);
+      setVoiceError(voiceErrorMessage(voiceException));
+    }
+  };
+
+  const toggleVoice = () => {
+    if (listening) stopVoice();
+    else startVoice();
+  };
+
   const send = async (textArg) => {
     const text = String(textArg ?? draft).trim();
     if (!text || streaming || !data) return;
@@ -740,6 +880,7 @@ export default function App() {
       return;
     }
     setQuotaNotice(false);
+    if (listening) stopVoice();
 
     setError('');
     const userMessage = {
@@ -1152,6 +1293,12 @@ export default function App() {
           )}
 
           <div className="composer-wrap">
+            {voiceError && (
+              <div className="voice-error">
+                <span>{voiceError}</span>
+                <button onClick={() => setVoiceError('')}>×</button>
+              </div>
+            )}
             {quotaNotice && (
               <div className="quota-banner">
                 <span>额度已用完，兑换后继续聊</span>
@@ -1187,19 +1334,30 @@ export default function App() {
                       : `剩余 ${credits} 次`
                     : '未兑换'}
                 </span>
-                {streaming ? (
-                  <button className="danger" onClick={stop}>
-                    停止
-                  </button>
-                ) : (
+                <div className="composer-buttons">
                   <button
-                    className="primary"
-                    onClick={() => send()}
-                    disabled={!draft.trim()}
+                    type="button"
+                    className={`mic-btn ${listening ? 'recording' : ''}`}
+                    onClick={toggleVoice}
+                    disabled={streaming}
+                    title="语音输入"
                   >
-                    发送
+                    {listening ? '停止' : '🎙'}
                   </button>
-                )}
+                  {streaming ? (
+                    <button className="danger" onClick={stop}>
+                      停止
+                    </button>
+                  ) : (
+                    <button
+                      className="primary"
+                      onClick={() => send()}
+                      disabled={!draft.trim()}
+                    >
+                      发送
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="composer-note">
