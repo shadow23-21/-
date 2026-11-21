@@ -7,7 +7,7 @@
 - `server/billing.mjs`：SQLite 账户 / 兑换码 / 用量。
 - `server/gateway.mjs`：`/api/redeem`、`/api/balance`、托管 `/api/chat`。
 - `scripts/codes.mjs`：生成/查看兑换码。
-- App 设置页「鲸忆额度」：输入兑换码、显示余额、托管聊天。
+- App 设置页只剩「鲸忆额度 / 关于」：兑换码、剩余次数；聊天页没额度时直接显示兑换框。
 
 ## 本地跑通
 
@@ -25,7 +25,8 @@ $env:VITE_API_BASE='http://127.0.0.1:8787'
 npm.cmd run build
 ```
 
-打开 App → 设置 → 鲸忆额度 → 输入兑换码 → 保存 → 聊天。每轮扣 1 次；上游失败会退回。
+打开 App → 输入兑换码（聊天页或设置页都可以）→ 聊天。每轮扣 1 次；上游失败会退回。
+余额不足时再输入新兑换码，会加到同一个 account token，不会丢余额。
 
 ## 兑换码
 

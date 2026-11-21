@@ -77,7 +77,7 @@ export function createCodes(db, credits = 500, count = 1) {
   return created;
 }
 
-export function redeemCode(db, rawCode) {
+export function redeemCode(db, rawCode, existingAccountId = null) {
   const code = normalizeCode(rawCode);
   if (!code) return null;
 
@@ -91,8 +91,28 @@ export function redeemCode(db, rawCode) {
       return null;
     }
 
-    const token = makeToken();
     const stamp = now();
+    if (existingAccountId) {
+      db.prepare(
+        'UPDATE accounts SET credits = credits + ?, updated_at = ? WHERE id = ?',
+      ).run(row.credits, stamp, existingAccountId);
+      db.prepare('UPDATE codes SET used_by = ?, used_at = ? WHERE code = ?').run(
+        existingAccountId,
+        stamp,
+        code,
+      );
+      const account = db
+        .prepare('SELECT credits FROM accounts WHERE id = ?')
+        .get(existingAccountId);
+      db.exec('COMMIT');
+      return {
+        token: null,
+        credits: account?.credits ?? row.credits,
+        accountId: existingAccountId,
+      };
+    }
+
+    const token = makeToken();
     const account = db
       .prepare(
         'INSERT INTO accounts (token_hash, credits, created_at, updated_at) VALUES (?, ?, ?, ?)',

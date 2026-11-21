@@ -1,5 +1,10 @@
-# Build the signed, standalone release APK/AAB.
-# Release APK defaults to DeepSeek direct mode, so users do not need a local gateway.
+# Build the signed managed-credits release APK/AAB.
+# Pass the public gateway URL, e.g. -GatewayUrl https://gateway.example.com
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$GatewayUrl
+)
+
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -14,8 +19,8 @@ if (-not (Test-Path (Join-Path $android 'app/release.keystore'))) {
     throw 'Missing web/android/app/release.keystore (signing key).'
 }
 
-$env:VITE_DIRECT_DEEPSEEK = 'true'
-$env:VITE_API_BASE = ''
+$env:VITE_DIRECT_DEEPSEEK = 'false'
+$env:VITE_API_BASE = $GatewayUrl.TrimEnd('/')
 
 Push-Location $web
 try {

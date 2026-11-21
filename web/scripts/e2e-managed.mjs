@@ -30,7 +30,7 @@ try {
   });
 
   await page.goto(URL, { waitUntil: 'networkidle0' });
-  await page.waitForSelector('.composer textarea');
+  await page.waitForSelector('.topbar');
 
   await page.evaluate(() => {
     [...document.querySelectorAll('button')]
@@ -38,17 +38,9 @@ try {
       ?.click();
   });
   await page.waitForFunction(() =>
-    document.body.innerText
-      .toLowerCase()
-      .includes('鲸忆额度（免 api key）'),
+    document.body.innerText.toLowerCase().includes('鲸忆额度'),
   );
 
-  await page.evaluate(() => {
-    const label = [...document.querySelectorAll('label.check')].find((item) =>
-      item.innerText.includes('使用鲸忆额度'),
-    );
-    label?.querySelector('input')?.click();
-  });
   await page.waitForSelector('.managed-redeem input');
   await page.type('.managed-redeem input', code);
   await page.evaluate(() => {
@@ -56,9 +48,13 @@ try {
       .find((button) => button.textContent.trim() === '兑换')
       ?.click();
   });
-  await page.waitForFunction(() => document.body.innerText.includes('剩余'), {
-    timeout: 20000,
-  });
+  await page.waitForFunction(
+    () => {
+      const node = document.querySelector('.managed-balance strong');
+      return node && node.innerText.trim() !== '—';
+    },
+    { timeout: 20000 },
+  );
   const credits = await page.$eval('.managed-balance strong', (node) =>
     node.innerText.trim(),
   );
@@ -66,7 +62,7 @@ try {
 
   await page.evaluate(() => {
     [...document.querySelectorAll('button')]
-      .find((button) => button.textContent.trim() === '保存')
+      .find((button) => button.textContent.trim() === '←')
       ?.click();
   });
   await page.waitForSelector('.composer textarea');

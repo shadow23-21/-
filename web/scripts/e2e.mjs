@@ -5,6 +5,8 @@ import puppeteer from 'puppeteer-core';
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const URL = 'http://127.0.0.1:8787/';
 const fixture = path.resolve('../fixtures/deepseek-export.zip');
+const code = process.env.CODE;
+if (!code) throw new Error('Set CODE to a fresh redeem code');
 
 const browser = await puppeteer.launch({
   executablePath: EDGE,
@@ -30,6 +32,29 @@ try {
 
   await page.goto(URL, { waitUntil: 'networkidle0' });
   await page.waitForSelector('input[type=file]', { state: 'attached' });
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '设置')
+      ?.click();
+  });
+  await page.waitForSelector('.managed-redeem input');
+  await page.type('.managed-redeem input', code);
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '兑换')
+      ?.click();
+  });
+  await page.waitForFunction(() => document.body.innerText.includes('剩余'), {
+    timeout: 20000,
+  });
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '←')
+      ?.click();
+  });
+  await page.waitForSelector('.composer textarea');
+  console.log('redeem: ok');
 
   const fileInput = await page.$('input[type=file]');
   await fileInput.uploadFile(fixture);
@@ -149,7 +174,7 @@ try {
       .find((button) => button.textContent.trim() === '设置')
       ?.click();
   });
-  await page.waitForSelector('.field-grid');
+  await page.waitForSelector('.managed-redeem');
   await page.screenshot({ path: '../out/web-demo/settings.png' });
   console.log('settings page: ok');
 

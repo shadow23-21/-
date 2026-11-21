@@ -501,6 +501,34 @@ select {
   margin-top: 0;
 }
 
+.redeem-gate {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(23, 33, 58, 0.92), rgba(16, 24, 43, 0.92));
+  text-align: center;
+}
+
+.redeem-gate strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.redeem-gate span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.redeem-gate .managed-redeem {
+  width: 100%;
+  max-width: 430px;
+  margin-top: 8px;
+}
+
 .managed-redeem {
   display: flex;
   flex-wrap: wrap;

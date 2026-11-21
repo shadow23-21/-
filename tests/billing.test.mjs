@@ -45,11 +45,16 @@ test('redeem, consume, refund and stats', () => {
     assert.equal(addCreditsByToken(db, redeemed.token, 100), true);
     assert.equal(getAccount(db, redeemed.token).credits, 101);
 
+    const toppedUp = redeemCode(db, second, account.id);
+    assert.equal(toppedUp.token, null);
+    assert.equal(toppedUp.credits, 601);
+    assert.equal(getAccount(db, redeemed.token).credits, 601);
+
     assert.deepEqual(billingStats(db), {
       accounts: 1,
-      credits: 101,
+      credits: 601,
       codes: 2,
-      used: 1,
+      used: 2,
     });
   } finally {
     db.close();

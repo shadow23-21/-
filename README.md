@@ -1,6 +1,6 @@
 # whale-memory（工作名）
 
-手机优先、本地优先的长期角色扮演记忆应用。把用户在 DeepSeek 里聊了几个月的记录搬进来，重建人设、story bible 和可检索记忆，之后用 BYOK 低成本继续聊。
+手机优先、本地优先的长期角色扮演记忆应用。把用户在 DeepSeek 里聊了几个月的记录搬进来，重建人设、story bible 和可检索记忆，之后用兑换码额度继续聊。
 
 > 工作名，正式品牌未定。仓库默认私有。
 
@@ -39,7 +39,7 @@
 - [x] 角色列表排序（最近 / 名字 / 记忆数）
 - [x] PWA：manifest + 安装到桌面 + service worker 离线壳
 - [x] 签名 release APK + AAB（v2/v3，keystore 已生成）
-- [x] DeepSeek 直连：release 填自己的 key 即可聊，无需 gateway
+- [x] 消费端只保留兑换码/额度；隐藏模型、API key、直连等技术设置
 - [x] 商店素材包 + 上架/合规清单（`store/`）
 - [x] 变现方案：BYOK + 托管额度，先兑换码后支付/IAP（`docs/monetization.md`）
 - [x] 托管额度：SQLite 账户/兑换码/扣费 + App 兑换/余额/免 key 聊天（`docs/managed-mode.md`）
@@ -97,21 +97,20 @@ node server/gateway.mjs
 - gateway 只监听 `127.0.0.1`，`/api/chat` 透传 DeepSeek / 智谱；默认用 `.env` 的 key，也能在设置里填自己的 key。
 - 请求统一带 `thinking: { type: "disabled" }`：DeepSeek V4 和 GLM 默认思考，不关会只出 reasoning、正文为空。
 - 上下文 = 人设 + story bible + 检索到的往事 + 最近 6 轮；页面会显示估算 tokens / 成本。
-- 设置面板可切 DeepSeek / 智谱、改模型、填 key；key 只在本机 localStorage（勾选“记住”时）。
+- 设置页只保留「鲸忆额度」和「关于」：兑换码、剩余次数；模型、API key、直连等技术项不再暴露。
 - 主界面是纯聊天：只有角色名、消息流和输入框；「记忆」和「设置」是独立页面；左上角 ☰ 进入角色列表。
 - 角色列表：每个角色独立的 story bible / 消息 / 记忆；支持搜索、排序（最近/名字/记忆数）、改名；「导入新角色」追加，不覆盖当前角色。
 - 支持安装到桌面：manifest + standalone + service worker；Chrome/Edge 角色页会出现「安装」，iOS Safari 用分享 → 添加到主屏幕。
 - 每条消息右上角「记住」：把这句话写进长期记忆，下一轮就会注入；记忆页可编辑 kind/文本/重要度，也可逐条删除。
 - 记忆页「导出」把当前角色打成 `.json` 角色包（story bible + events + messages）；「导入新角色」会自动识别角色包。
-- 设置页可调「上下文预算 tokens」，默认 1500；超预算时先裁往事，再裁长期记忆，最后裁旧对话。
+- 上下文预算固定在代码内（默认 1500）；超预算时先裁往事，再裁长期记忆，最后裁旧对话。
 - App 名「鲸忆」，Android 图标是蓝紫渐变 + 鲸字。
 - 「导入新角色」在角色列表；支持 **DeepSeek 官方 `.zip` 直接导入**（自动找 `conversation.json`），也支持 `.json` / `.jsonl` / `.txt`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。
 - 「新建角色」不导入也能用：填角色名、人设、关系、开场白，直接开始聊。
 - 抽取默认走 DeepSeek `deepseek-flash`，智谱 `glm-4.7-flash` 作为 fallback；智谱 429 时自动切换。
-- 默认省流：最近 6 轮 + 最多 4 条往事 + 6 条长期记忆 + 输出 ≤500 tokens；输入框上方显示本轮估算成本。
-- 浏览器 E2E：`cd web && node scripts/e2e.mjs`（需要 gateway 已启动 + Edge；会验证导入、聊天、记忆页、设置页）。
-- 直连 E2E：先 `VITE_DIRECT_DEEPSEEK=true VITE_API_BASE='' npm run build`，再 `node scripts/e2e-direct.mjs`（从 `http://localhost:8787` 直接调 DeepSeek，验证 CORS/流式）。
-- 托管 E2E：生成码后 `CODE=WHALE-... node web/scripts/e2e-managed.mjs`（需要本地 gateway + Edge；验证兑换/余额/免 key 聊天/扣次）。
+- 默认省流：最近 6 轮 + 最多 4 条往事 + 6 条长期记忆 + 输出 ≤500 tokens；用户只看到「剩余次数」。
+- 托管 E2E：生成码后 `CODE=WHALE-... node web/scripts/e2e.mjs`（需要本地 gateway + Edge；先兑换再跑导入/聊天/记忆/持久化）。
+- 额度 E2E：`CODE=WHALE-... node web/scripts/e2e-managed.mjs`（兑换/余额/免 key 聊天/扣次）。
 
 ## Android
 
@@ -157,19 +156,20 @@ npm.cmd run build
 ## 签名发布（可直接发给别人）
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1
+powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -GatewayUrl https://你的gateway域名
 ```
 
 产物：
 
-- `release/whale-memory-1.0.0.apk`：已签名，直接安装；默认 **DeepSeek 直连**，装完到设置填自己的 key 即可聊。
+- `release/whale-memory-1.0.0.apk`：已签名，直接安装；启动后输入兑换码才能聊天。
 - `release/whale-memory-1.0.0.aab`：Google Play 上传。
 - `release/keystore-backup/`：签名密钥 + 密码；**立刻离线备份，丢了无法更新**。
 
 注意：
 
+- 必须传公网 HTTPS gateway；App 不再提供 API key/model 设置。
+- 当前 `release/` 里的旧 APK 是上一版 BYOK 构建，不能用于新的兑换码流程；用上面的命令重建。
 - debug 和 release 签名不同，手机装过 debug 要先卸载，不能覆盖安装。
-- 智谱仍走 gateway；DeepSeek 不需要。
 - 商店素材、隐私政策模板、Google Play / App Store / 国内商店清单在 `store/`。
 - 当前 release 尚未补举报/屏蔽/年龄门/未成年人模式；正式上架前必须做。
 

@@ -2,8 +2,8 @@
 
 ## 0. 先补产品硬缺口
 
-- [x] **DeepSeek 直连**：release 已默认 `VITE_DIRECT_DEEPSEEK=true`，用户填自己的 key 即可聊，不依赖 gateway。
-- [ ] **可选：公网 HTTPS gateway**：如果要支持智谱 / 服务端 key / 用量统计，把 gateway 部署到 HTTPS（Cloudflare Worker / 轻量 VPS），App 的 `VITE_API_BASE` 改成它。
+- [x] **消费端只保留兑换码/额度**：设置里不再显示模型、API key、直连等技术项。
+- [ ] **公网 HTTPS gateway（必须）**：托管额度版需要 gateway + 公网 HTTPS；构建时 `-GatewayUrl` 指向它。部署见 `docs/managed-mode.md`。
 - [ ] **内容安全**：举报、屏蔽角色、敏感词/图片过滤、未成年人模式/年龄门。商店和国内监管都会查。
 - [ ] **隐私政策公网 URL**：填 `privacy-policy.md` 的运营者/邮箱，托管到 GitHub Pages 或自己的域名。
 - [ ] **账号/数据删除**：当前无账号；至少提供「删除角色/清除数据」，商店要求可删除。

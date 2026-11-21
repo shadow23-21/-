@@ -5,7 +5,7 @@ import {
   createCharacterPack,
   downloadCharacterPack,
 } from './lib/character-pack.js';
-import { API_BASE, DEFAULT_DIRECT_DEEPSEEK } from './lib/config.js';
+import { API_BASE } from './lib/config.js';
 import { importFile, readCharacterPack } from './lib/import-client.js';
 import {
   clearLibrary,
@@ -29,9 +29,9 @@ const DEFAULT_SETTINGS = {
   provider: 'deepseek',
   model: 'deepseek-flash',
   apiKey: '',
-  useServerKey: true,
-  directDeepseek: DEFAULT_DIRECT_DEEPSEEK,
-  managed: false,
+  useServerKey: false,
+  directDeepseek: false,
+  managed: true,
   remember: false,
   maxRecent: 6,
   retrievalLimit: 4,
@@ -64,12 +64,10 @@ const loadSettings = () => {
   try {
     const stored = JSON.parse(localStorage.getItem('whale-settings') || '{}');
     const merged = { ...DEFAULT_SETTINGS, ...stored };
-    if (merged.managed) {
-      merged.directDeepseek = false;
-      merged.useServerKey = false;
-    } else if (merged.directDeepseek) {
-      merged.useServerKey = false;
-    }
+    // Consumer build: no provider/model/key settings. Always use credits.
+    merged.managed = true;
+    merged.directDeepseek = false;
+    merged.useServerKey = false;
     return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -113,7 +111,6 @@ export default function App() {
   const [context, setContext] = useState(null);
   const [view, setView] = useState('chat');
   const [settings, setSettings] = useState(loadSettings);
-  const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
   const [characterQuery, setCharacterQuery] = useState('');
   const [characterSort, setCharacterSort] = useState('recent');
@@ -493,25 +490,9 @@ export default function App() {
 
   const persistSettings = (next) => {
     setSettings(next);
-    setDraftSettings(next);
     const persisted = { ...next };
     if (!next.remember) delete persisted.apiKey;
     localStorage.setItem('whale-settings', JSON.stringify(persisted));
-  };
-
-  const saveSettingsForm = () => {
-    const next = {
-      ...DEFAULT_SETTINGS,
-      ...draftSettings,
-      maxRecent: Number(draftSettings.maxRecent) || 6,
-      retrievalLimit: Number(draftSettings.retrievalLimit) || 0,
-      memoryLimit: Number(draftSettings.memoryLimit) || 0,
-      maxOutputTokens: Number(draftSettings.maxOutputTokens) || 500,
-      temperature: Number(draftSettings.temperature) || 0.9,
-    };
-    persistSettings(next);
-    setError('');
-    setView('chat');
   };
 
   const refreshBalance = async () => {
@@ -537,9 +518,11 @@ export default function App() {
     }
     setError('');
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (accountToken) headers.Authorization = `Bearer ${accountToken}`;
       const response = await fetch(`${API_BASE}/api/redeem`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ code }),
       });
       if (!response.ok) {
@@ -570,7 +553,6 @@ export default function App() {
   };
 
   const openSettings = () => {
-    setDraftSettings(settings);
     setView('settings');
   };
 
@@ -910,7 +892,7 @@ export default function App() {
           ? data.title
           : view === 'new'
             ? '不导入也能开始'
-            : '模型、省流和成本';
+            : '额度与兑换';
 
   return (
     <div className="app">
@@ -1001,16 +983,7 @@ export default function App() {
               </button>
             </>
           )}
-          {view === 'settings' && (
-            <>
-              <button className="ghost" onClick={() => setView('chat')}>
-                取消
-              </button>
-              <button className="primary" onClick={saveSettingsForm}>
-                保存
-              </button>
-            </>
-          )}
+
           <span className={`status ${streaming ? 'live' : ''}`}>
             {streaming ? '生成中…' : ''}
           </span>
@@ -1072,41 +1045,64 @@ export default function App() {
           </div>
 
           <div className="composer-wrap">
-            <div className="composer">
-              <textarea
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    send();
-                  }
-                }}
-                placeholder={`给「${data.persona.name}」发消息…`}
-                rows={1}
-              />
-              <div className="composer-row">
-                <span className="hint">
-                  {config.managed && `额度 ${credits ?? '—'} 次 · `}
-                  {context
-                    ? `≈ ${context.estimatedInputTokens} tokens · ¥${context.estimatedCostCNY.toFixed(3)} · 预算 ${context.budgetUsedPct}%`
-                    : `${config.provider} / ${config.model}`}
-                </span>
-                {streaming ? (
-                  <button className="danger" onClick={stop}>
-                    停止
+            {!accountToken || credits === 0 ? (
+              <div className="redeem-gate">
+                <strong>
+                  {accountToken ? '额度用完了，输入新兑换码' : '输入兑换码开始聊天'}
+                </strong>
+                <span>在微店购买后自动发货</span>
+                <div className="managed-redeem">
+                  <input
+                    value={redeemInput}
+                    placeholder="输入兑换码"
+                    onChange={(event) => setRedeemInput(event.target.value)}
+                  />
+                  <button
+                    className="primary"
+                    onClick={redeemAccount}
+                    disabled={!redeemInput.trim()}
+                  >
+                    兑换
                   </button>
-                ) : (
-                  <button className="primary" onClick={() => send()} disabled={!draft.trim()}>
-                    发送
-                  </button>
-                )}
+                </div>
               </div>
-            </div>
-            <div className="composer-note">
-              记忆 {data.memories.length} 条 · 回顾 {chatOptions.maxRecent} 轮 · 输出 ≤{' '}
-              {chatOptions.maxOutputTokens} tokens
-            </div>
+            ) : (
+              <>
+                <div className="composer">
+                  <textarea
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        send();
+                      }
+                    }}
+                    placeholder={`给「${data.persona.name}」发消息…`}
+                    rows={1}
+                  />
+                  <div className="composer-row">
+                    <span className="hint">剩余 {credits ?? '—'} 次</span>
+                    {streaming ? (
+                      <button className="danger" onClick={stop}>
+                        停止
+                      </button>
+                    ) : (
+                      <button
+                        className="primary"
+                        onClick={() => send()}
+                        disabled={!draft.trim()}
+                      >
+                        发送
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="composer-note">
+                  每轮消耗 1 次 · 剩余 {credits ?? '—'} 次
+                </div>
+              </>
+            )}
           </div>
         </main>
       )}
@@ -1274,7 +1270,6 @@ export default function App() {
         <MemoryPage
           data={data}
           chatOptions={chatOptions}
-          context={context}
           onUpdateMemory={updateMemory}
           onRemoveMemory={removeMemory}
         />
@@ -1282,8 +1277,6 @@ export default function App() {
 
       {view === 'settings' && (
         <SettingsPage
-          draftSettings={draftSettings}
-          setDraftSettings={setDraftSettings}
           accountToken={accountToken}
           credits={credits}
           redeemInput={redeemInput}
@@ -1361,7 +1354,7 @@ function InjectionSection({ context }) {
   );
 }
 
-function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory }) {
+function MemoryPage({ data, chatOptions, onUpdateMemory, onRemoveMemory }) {
   const persona = data.persona;
   const relationship = data.relationship;
   const [editingIndex, setEditingIndex] = useState(null);
@@ -1404,7 +1397,7 @@ function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory
           </div>
         </section>
 
-        <InjectionSection context={context} />
+
 
         <section className="page-card">
           <h3>人设</h3>
@@ -1562,9 +1555,7 @@ function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory
         </section>
 
         <p className="page-note">
-          每轮只注入：长期记忆最多 {chatOptions.memoryLimit} 条 + 相关往事最多{' '}
-          {chatOptions.retrievalLimit} 条 + 最近 {chatOptions.maxRecent} 轮；总预算约{' '}
-          {chatOptions.contextBudgetTokens} tokens。
+          角色会记住这些长期记忆，并在聊天时自然提起；不会把整份记录都塞给模型。
         </p>
       </div>
     </main>
@@ -1572,8 +1563,6 @@ function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory
 }
 
 function SettingsPage({
-  draftSettings,
-  setDraftSettings,
   accountToken,
   credits,
   redeemInput,
@@ -1582,242 +1571,54 @@ function SettingsPage({
   onRefreshBalance,
   onClearAccount,
 }) {
-  const update = (key, value) =>
-    setDraftSettings((previous) => ({ ...previous, [key]: value }));
-
   return (
     <main className="page">
       <div className="page-inner">
         <section className="page-card">
-          <h3>模型</h3>
-          <label className="field">
-            供应商
-            <select
-              value={draftSettings.provider || 'deepseek'}
-              onChange={(event) => {
-                const provider = event.target.value;
-                setDraftSettings((previous) => ({
-                  ...previous,
-                  provider,
-                  model: provider === 'zhipu' ? 'glm-4.7-flash' : 'deepseek-flash',
-                }));
-              }}
-            >
-              <option value="deepseek">DeepSeek</option>
-              <option value="zhipu">智谱 BigModel</option>
-            </select>
-          </label>
-          <label className="field">
-            模型
-            <input
-              value={draftSettings.model || ''}
-              onChange={(event) => update('model', event.target.value)}
-            />
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              disabled={Boolean(draftSettings.directDeepseek)}
-              checked={draftSettings.useServerKey !== false}
-              onChange={(event) => update('useServerKey', event.target.checked)}
-            />
-            使用服务器 .env 里的 key（仅本地）
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              disabled={(draftSettings.provider || 'deepseek') !== 'deepseek'}
-              checked={Boolean(draftSettings.directDeepseek)}
-              onChange={(event) => {
-                const direct = event.target.checked;
-                setDraftSettings((previous) => ({
-                  ...previous,
-                  directDeepseek: direct,
-                  useServerKey: direct ? false : previous.useServerKey,
-                }));
-              }}
-            />
-            DeepSeek 直连（不需要 gateway，必须填 key）
-          </label>
-          <label className="field">
-            API key
-            <input
-              type="password"
-              placeholder="sk-... / id.secret"
-              value={draftSettings.apiKey || ''}
-              disabled={draftSettings.useServerKey !== false}
-              onChange={(event) => update('apiKey', event.target.value)}
-            />
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={Boolean(draftSettings.remember)}
-              onChange={(event) => update('remember', event.target.checked)}
-            />
-            记住 key（只存本机 localStorage）
-          </label>
-        </section>
-
-        <section className="page-card">
-          <h3>鲸忆额度（免 API key）</h3>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={Boolean(draftSettings.managed)}
-              onChange={(event) => {
-                const managed = event.target.checked;
-                setDraftSettings((previous) => ({
-                  ...previous,
-                  managed,
-                  directDeepseek: managed ? false : previous.directDeepseek,
-                  useServerKey: managed ? false : previous.useServerKey,
-                }));
-              }}
-            />
-            使用鲸忆额度（托管模式）
-          </label>
-          <p className="page-sub">
-            托管模式需要公网 gateway；当前 API 地址：{API_BASE || '未配置（当前 release 是直连模式）'}
-          </p>
-          {accountToken ? (
-            <>
-              <p className="managed-balance">
+          <h3>鲸忆额度</h3>
+          <p className="managed-balance">
+            {accountToken ? (
+              <>
                 剩余 <strong>{credits ?? '…'}</strong> 次
-              </p>
-              <div className="page-actions">
-                <button className="ghost" onClick={onRefreshBalance}>
-                  刷新余额
-                </button>
-                <button className="ghost" onClick={onClearAccount}>
-                  退出额度模式
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="managed-redeem">
-                <input
-                  value={redeemInput}
-                  placeholder="WHALE-XXXX-XXXX-XXXX"
-                  onChange={(event) => setRedeemInput(event.target.value)}
-                />
-                <button
-                  className="primary"
-                  onClick={onRedeem}
-                  disabled={!redeemInput.trim()}
-                >
-                  兑换
-                </button>
-              </div>
-              <p className="page-sub">
-                在爱发电 / 微店购买兑换码后填入；兑换码一次性使用，绑定当前账号 token。
-              </p>
-            </>
-          )}
-        </section>
-
-        <section className="page-card">
-          <h3>省流</h3>
-          <p className="page-sub">
-            默认就是低成本配置：少带历史、少带记忆、限制输出。DeepSeek 关闭 thinking 后不产生
-            reasoning token。
+              </>
+            ) : (
+              '尚未兑换'
+            )}
           </p>
-          <button
-            className="ghost"
-            onClick={() =>
-              setDraftSettings((previous) => ({
-                ...previous,
-                maxRecent: 6,
-                retrievalLimit: 4,
-                memoryLimit: 6,
-                contextBudgetTokens: 1000,
-                maxOutputTokens: 500,
-              }))
-            }
-          >
-            套用省流预设
-          </button>
-          <div className="field-grid">
-            <label className="field">
-              最近对话轮数
-              <input
-                type="number"
-                min="2"
-                max="20"
-                value={draftSettings.maxRecent ?? 6}
-                onChange={(event) => update('maxRecent', event.target.value)}
-              />
-            </label>
-            <label className="field">
-              相关往事条数
-              <input
-                type="number"
-                min="0"
-                max="12"
-                value={draftSettings.retrievalLimit ?? 4}
-                onChange={(event) => update('retrievalLimit', event.target.value)}
-              />
-            </label>
-            <label className="field">
-              长期记忆条数
-              <input
-                type="number"
-                min="0"
-                max="20"
-                value={draftSettings.memoryLimit ?? 6}
-                onChange={(event) => update('memoryLimit', event.target.value)}
-              />
-            </label>
-            <label className="field">
-              上下文预算 tokens
-              <input
-                type="number"
-                min="300"
-                max="8000"
-                step="100"
-                value={draftSettings.contextBudgetTokens ?? 1500}
-                onChange={(event) =>
-                  update('contextBudgetTokens', event.target.value)
-                }
-              />
-            </label>
-            <label className="field">
-              最大输出 tokens
-              <input
-                type="number"
-                min="200"
-                max="2000"
-                value={draftSettings.maxOutputTokens ?? 500}
-                onChange={(event) => update('maxOutputTokens', event.target.value)}
-              />
-            </label>
-            <label className="field">
-              温度
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="1.5"
-                value={draftSettings.temperature ?? 0.9}
-                onChange={(event) => update('temperature', event.target.value)}
-              />
-            </label>
+          <div className="managed-redeem">
+            <input
+              value={redeemInput}
+              placeholder="输入兑换码"
+              onChange={(event) => setRedeemInput(event.target.value)}
+            />
+            <button
+              className="primary"
+              onClick={onRedeem}
+              disabled={!redeemInput.trim()}
+            >
+              兑换
+            </button>
           </div>
-        </section>
-
-        <section className="page-card">
-          <h3>成本</h3>
+          <div className="page-actions">
+            <button className="ghost" onClick={onRefreshBalance}>
+              刷新余额
+            </button>
+            {accountToken && (
+              <button className="ghost" onClick={onClearAccount}>
+                清除本机额度
+              </button>
+            )}
+          </div>
           <p className="page-sub">
-            估算按 DeepSeek V4.1 Flash 空闲价：输入 ¥1.56/M，输出 ¥4.69/M。实际以账单为准。
+            兑换码在微店购买后自动发货；每轮对话消耗 1 次。
           </p>
         </section>
 
         <section className="page-card">
-          <h3>安装</h3>
+          <h3>关于</h3>
+          <p className="page-sub">鲸忆 1.0.0 · 本地优先的角色记忆</p>
           <p className="page-sub">
-            Chrome / Edge 支持「安装到桌面」；iOS Safari 用分享 → 添加到主屏幕。Android 用
-            Capacitor 打包的「鲸忆」。
+            角色和聊天记录保存在本机；生成回复由鲸忆额度服务提供。
           </p>
         </section>
       </div>

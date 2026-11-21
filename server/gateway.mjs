@@ -142,12 +142,17 @@ async function handleRedeem(request, response) {
     return;
   }
 
-  const result = redeemCode(billing, payload.code);
+  const token = bearerToken(request);
+  const account = token ? getAccount(billing, token) : null;
+  const result = redeemCode(billing, payload.code, account?.id ?? null);
   if (!result) {
     sendJson(response, 400, { error: '兑换码无效或已使用' });
     return;
   }
-  sendJson(response, 200, result);
+  sendJson(response, 200, {
+    ...result,
+    token: account ? token : result.token,
+  });
 }
 
 function handleBalance(request, response) {
