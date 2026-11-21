@@ -349,11 +349,13 @@ select {
 
 .primary,
 .danger {
+  flex-shrink: 0;
   padding: 8px 16px;
   border: 0;
   border-radius: 9px;
   cursor: pointer;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .primary {
@@ -374,6 +376,11 @@ select {
 .memory-panel {
   overflow: auto;
   padding: 16px;
+}
+
+.memory-close {
+  display: none;
+  margin-bottom: 10px;
 }
 
 .memory-card {
@@ -526,30 +533,142 @@ dd {
 }
 
 @media (max-width: 960px) {
+  body {
+    overflow-x: hidden;
+  }
+
   .app {
-    height: auto;
-    min-height: 100vh;
-    overflow: visible;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .topbar {
+    flex-direction: row;
     align-items: flex-start;
-    flex-direction: column;
-    padding: 16px 18px 12px;
+    gap: 8px;
+    padding: 10px 12px 8px;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .eyebrow {
+    display: none;
+  }
+
+  .brand h1 {
+    overflow: hidden;
+    margin: 0 0 2px;
+    font-size: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sub {
+    display: block;
+    overflow: hidden;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .topbar-actions .ghost {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  .status {
+    display: none;
   }
 
   .layout {
-    display: block;
-    padding: 12px 18px 20px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+    padding: 8px 10px 10px;
   }
 
   .chat-panel {
-    height: 72vh;
-    margin-bottom: 14px;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    margin: 0;
   }
 
   .memory-panel {
-    max-height: none;
+    display: none;
+  }
+
+  .memory-panel.open {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    overflow: auto;
+    border: 0;
+    border-radius: 0;
+    background: #0f172b;
+    padding: 18px;
+  }
+
+  .memory-close {
+    display: inline-flex;
+  }
+
+  .chat-toolbar {
+    padding: 8px 10px;
+  }
+
+  .chat-toolbar .ghost {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .messages {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .message {
+    max-width: 100%;
+    padding: 9px 11px;
+    font-size: 14px;
+  }
+
+  .composer {
+    padding: 8px 10px 10px;
+  }
+
+  .composer textarea {
+    min-height: 52px;
+  }
+
+  .composer-actions {
+    gap: 8px;
+  }
+
+  .hint {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .primary,
+  .danger {
+    padding: 8px 14px;
+  }
+
+  .context-box {
+    margin: 0 10px 8px;
   }
 
   .context-columns {

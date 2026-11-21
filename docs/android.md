@@ -38,7 +38,8 @@ adb shell monkey -p com.whalememory.app -c android.intent.category.LAUNCHER 1
 - `adb reverse` 把手机的 `127.0.0.1:8787` 映射到电脑的 gateway；WebView 里的 `VITE_API_BASE` 就是它。
 - 手机需要：USB 调试、USB 安装、USB 调试（安全设置）。
 - Redmi/Xiaomi 报 `INSTALL_FAILED_USER_RESTRICTED` 时，就是上面后两个开关没开；部分机型还要求登录小米账号/插 SIM。
-- 当前这台 Redmi M332BF 已连上，但 `adb install` 被 MIUI 拦下；打开开关后再重试。
+- 当前 Redmi M332BF 已安装成功并启动；`adb shell input` 仍报 `INJECT_EVENTS`，自动点按/输入还不行，手动在手机上打字可用。
+- 移动端是单列布局：聊天占满屏，右上角「记忆」打开 story bible 抽屉。
 
 ## 生产注意
 

@@ -25,7 +25,8 @@
 - [x] 浏览器导入 + IndexedDB 持久化 + `/api/extract` 生成 story bible
 - [x] 浏览器 E2E：上传 fixture → 导入 → 聊天（`web/scripts/e2e.mjs`）
 - [x] Android 工程 + debug APK 构建通过（`web/android`）
-- [ ] 手机安装验证（Redmi 需要先开 USB 安装权限）
+- [x] Redmi M332BF 安装/启动验证；移动端单列布局 + 记忆抽屉
+- [ ] 手机上的自动输入（MIUI 仍限制 `adb shell input`，手动打字可用）
 
 ## 目录
 

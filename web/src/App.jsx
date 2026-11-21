@@ -41,6 +41,7 @@ export default function App() {
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [source, setSource] = useState('demo');
   const [importing, setImporting] = useState(false);
@@ -316,6 +317,9 @@ export default function App() {
               handleFile(file);
             }}
           />
+          <button className="ghost" onClick={() => setMemoryOpen((value) => !value)}>
+            记忆
+          </button>
           <button
             className="ghost"
             onClick={() => fileInputRef.current?.click()}
@@ -451,7 +455,10 @@ export default function App() {
           </div>
         </section>
 
-        <aside className="panel memory-panel">
+        <aside className={`panel memory-panel ${memoryOpen ? 'open' : ''}`}>
+          <button className="ghost memory-close" onClick={() => setMemoryOpen(false)}>
+            关闭
+          </button>
           <div className="memory-card">
             <div className="memory-name">{data.persona.name}</div>
             <div className="chips">
