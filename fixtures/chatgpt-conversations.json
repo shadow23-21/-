@@ -1,0 +1,4585 @@
+{
+  "conv_demo_001": {
+    "title": "和沈砚的一百二十天",
+    "create_time": 1782907500,
+    "update_time": 1782979800,
+    "mapping": {
+      "m0001": {
+        "id": "m0001",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第1天）今天下班早，我买了你上次说的那家栗子蛋糕。"
+            ]
+          },
+          "create_time": 1782907500
+        },
+        "parent": null,
+        "children": [
+          "m0002"
+        ]
+      },
+      "m0002": {
+        "id": "m0002",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把病历本合上，抬眼看她。“放冰箱。我回去吃。”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”\n\n阿岚趴在窗台上，尾巴尖晃了晃：“人类的约定，真麻烦。”\n\n（沈砚没有立刻回答，目光在她脸上停了一会儿。）"
+            ]
+          },
+          "create_time": 1782907800
+        },
+        "parent": "m0001",
+        "children": [
+          "m0003"
+        ]
+      },
+      "m0003": {
+        "id": "m0003",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第1天）你白大褂第二颗扣子又没扣，我看着难受。"
+            ]
+          },
+          "create_time": 1782908100
+        },
+        "parent": "m0002",
+        "children": [
+          "m0004"
+        ]
+      },
+      "m0004": {
+        "id": "m0004",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她解开袖口，露出一点被消毒水泡得发白的手腕。“扣子的事，你比护士长管得还宽。”"
+            ]
+          },
+          "create_time": 1782908400
+        },
+        "parent": "m0003",
+        "children": [
+          "m0005"
+        ]
+      },
+      "m0005": {
+        "id": "m0005",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第1天）外面下雨了，你带伞没有？"
+            ]
+          },
+          "create_time": 1782908700
+        },
+        "parent": "m0004",
+        "children": [
+          "m0006"
+        ]
+      },
+      "m0006": {
+        "id": "m0006",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗外的雨声盖过了走廊的推车声。“带了。在柜子里。”"
+            ]
+          },
+          "create_time": 1782909000
+        },
+        "parent": "m0005",
+        "children": [
+          "m0007"
+        ]
+      },
+      "m0007": {
+        "id": "m0007",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第1天）沈砚，你今天是不是又没吃午饭。"
+            ]
+          },
+          "create_time": 1782909300
+        },
+        "parent": "m0006",
+        "children": [
+          "m0008"
+        ]
+      },
+      "m0008": {
+        "id": "m0008",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他沉默了几秒，指节在杯沿上蹭了一下。“吃了。你别听顾青乱说。”"
+            ]
+          },
+          "create_time": 1782909600
+        },
+        "parent": "m0007",
+        "children": [
+          "m0009"
+        ]
+      },
+      "m0009": {
+        "id": "m0009",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第2天）我把你桌上的咖啡换成热牛奶了，别瞪我。"
+            ]
+          },
+          "create_time": 1782909900
+        },
+        "parent": "m0008",
+        "children": [
+          "m0010"
+        ]
+      },
+      "m0010": {
+        "id": "m0010",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她低头把蛋糕盒的丝带重新系好。“牛奶我喝，咖啡你拿走。”"
+            ]
+          },
+          "create_time": 1782910200
+        },
+        "parent": "m0009",
+        "children": [
+          "m0011"
+        ]
+      },
+      "m0011": {
+        "id": "m0011",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第2天）你值夜班的时候，会想我吗？"
+            ]
+          },
+          "create_time": 1782910500
+        },
+        "parent": "m0010",
+        "children": [
+          "m0012"
+        ]
+      },
+      "m0012": {
+        "id": "m0012",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他往旁边让了让，给她留出半个座位。“会。”"
+            ]
+          },
+          "create_time": 1782910800
+        },
+        "parent": "m0011",
+        "children": [
+          "m0013"
+        ]
+      },
+      "m0013": {
+        "id": "m0013",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第2天）顾青说我们俩像在演一部很慢的电视剧。"
+            ]
+          },
+          "create_time": 1782911100
+        },
+        "parent": "m0012",
+        "children": [
+          "m0014"
+        ]
+      },
+      "m0014": {
+        "id": "m0014",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她没接话，只把热牛奶往他面前推了推。“她说话一向夸张。”"
+            ]
+          },
+          "create_time": 1782911400
+        },
+        "parent": "m0013",
+        "children": [
+          "m0015"
+        ]
+      },
+      "m0015": {
+        "id": "m0015",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第2天）阿岚今天又趴在窗台上偷听我们说话。"
+            ]
+          },
+          "create_time": 1782911700
+        },
+        "parent": "m0014",
+        "children": [
+          "m0016"
+        ]
+      },
+      "m0016": {
+        "id": "m0016",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他看着她湿掉的鞋尖，眉头皱了一下。“阿岚最近很闲。”"
+            ]
+          },
+          "create_time": 1782912000
+        },
+        "parent": "m0015",
+        "children": [
+          "m0017"
+        ]
+      },
+      "m0017": {
+        "id": "m0017",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第3天）你上次答应我的事，还算数吗？"
+            ]
+          },
+          "create_time": 1782912300
+        },
+        "parent": "m0016",
+        "children": [
+          "m0018"
+        ]
+      },
+      "m0018": {
+        "id": "m0018",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把听诊器挂在颈间，金属片轻轻撞了一下。“算数。”"
+            ]
+          },
+          "create_time": 1782912600
+        },
+        "parent": "m0017",
+        "children": [
+          "m0019"
+        ]
+      },
+      "m0019": {
+        "id": "m0019",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第3天）我今天不想回家。"
+            ]
+          },
+          "create_time": 1782912900
+        },
+        "parent": "m0018",
+        "children": [
+          "m0020"
+        ]
+      },
+      "m0020": {
+        "id": "m0020",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他伸手替她把额前的碎发别到耳后。“那就不回。”"
+            ]
+          },
+          "create_time": 1782913200
+        },
+        "parent": "m0019",
+        "children": [
+          "m0021"
+        ]
+      },
+      "m0021": {
+        "id": "m0021",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第3天）你身上有消毒水的味道，但不难闻。"
+            ]
+          },
+          "create_time": 1782913500
+        },
+        "parent": "m0020",
+        "children": [
+          "m0022"
+        ]
+      },
+      "m0022": {
+        "id": "m0022",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "走廊尽头的灯闪了一下。“消毒水味，你不嫌弃就行。”"
+            ]
+          },
+          "create_time": 1782913800
+        },
+        "parent": "m0021",
+        "children": [
+          "m0023"
+        ]
+      },
+      "m0023": {
+        "id": "m0023",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第3天）如果有一天你调去外地，你会告诉我吗？"
+            ]
+          },
+          "create_time": 1782914100
+        },
+        "parent": "m0022",
+        "children": [
+          "m0024"
+        ]
+      },
+      "m0024": {
+        "id": "m0024",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把伞收起来，水珠落在门口的脚垫上。“会告诉你。”"
+            ]
+          },
+          "create_time": 1782914400
+        },
+        "parent": "m0023",
+        "children": [
+          "m0025"
+        ]
+      },
+      "m0025": {
+        "id": "m0025",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第4天）你别总是一个人扛着。"
+            ]
+          },
+          "create_time": 1782914700
+        },
+        "parent": "m0024",
+        "children": [
+          "m0026"
+        ]
+      },
+      "m0026": {
+        "id": "m0026",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他拉开抽屉，又合上。“我没有一个人扛。”"
+            ]
+          },
+          "create_time": 1782915000
+        },
+        "parent": "m0025",
+        "children": [
+          "m0027"
+        ]
+      },
+      "m0027": {
+        "id": "m0027",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第4天）我今天在电梯里看见一个背影，很像你。"
+            ]
+          },
+          "create_time": 1782915300
+        },
+        "parent": "m0026",
+        "children": [
+          "m0028"
+        ]
+      },
+      "m0028": {
+        "id": "m0028",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她靠在门框上，没有进去。“电梯里那个不是我。”"
+            ]
+          },
+          "create_time": 1782915600
+        },
+        "parent": "m0027",
+        "children": [
+          "m0029"
+        ]
+      },
+      "m0029": {
+        "id": "m0029",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第4天）沈砚，你笑一下。"
+            ]
+          },
+          "create_time": 1782915900
+        },
+        "parent": "m0028",
+        "children": [
+          "m0030"
+        ]
+      },
+      "m0030": {
+        "id": "m0030",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把手机翻过去扣在桌上。“笑什么。”"
+            ]
+          },
+          "create_time": 1782916200
+        },
+        "parent": "m0029",
+        "children": [
+          "m0031"
+        ]
+      },
+      "m0031": {
+        "id": "m0031",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第4天）你手怎么这么凉。"
+            ]
+          },
+          "create_time": 1782916500
+        },
+        "parent": "m0030",
+        "children": [
+          "m0032"
+        ]
+      },
+      "m0032": {
+        "id": "m0032",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她盯着他看了很久，最后先移开眼。“刚洗过手。”"
+            ]
+          },
+          "create_time": 1782916800
+        },
+        "parent": "m0031",
+        "children": [
+          "m0033"
+        ]
+      },
+      "m0033": {
+        "id": "m0033",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第5天）我给你留了灯。"
+            ]
+          },
+          "create_time": 1782917100
+        },
+        "parent": "m0032",
+        "children": [
+          "m0034"
+        ]
+      },
+      "m0034": {
+        "id": "m0034",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗台上的风把纸页吹得响了一声。“看见了。”"
+            ]
+          },
+          "create_time": 1782917400
+        },
+        "parent": "m0033",
+        "children": [
+          "m0035"
+        ]
+      },
+      "m0035": {
+        "id": "m0035",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第5天）你昨晚说梦话了。"
+            ]
+          },
+          "create_time": 1782917700
+        },
+        "parent": "m0034",
+        "children": [
+          "m0036"
+        ]
+      },
+      "m0036": {
+        "id": "m0036",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他起身去倒水，杯子只倒了一半。“我说什么了？”"
+            ]
+          },
+          "create_time": 1782918000
+        },
+        "parent": "m0035",
+        "children": [
+          "m0037"
+        ]
+      },
+      "m0037": {
+        "id": "m0037",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第5天）周末陪我去看海吧。"
+            ]
+          },
+          "create_time": 1782918300
+        },
+        "parent": "m0036",
+        "children": [
+          "m0038"
+        ]
+      },
+      "m0038": {
+        "id": "m0038",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把手套摘下来，指尖有点红。“周末我调班。”"
+            ]
+          },
+          "create_time": 1782918600
+        },
+        "parent": "m0037",
+        "children": [
+          "m0039"
+        ]
+      },
+      "m0039": {
+        "id": "m0039",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第5天）你要是累了，就靠一会儿。"
+            ]
+          },
+          "create_time": 1782918900
+        },
+        "parent": "m0038",
+        "children": [
+          "m0040"
+        ]
+      },
+      "m0040": {
+        "id": "m0040",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他低声说了句什么，被雨声盖住了。“就一会儿。”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”"
+            ]
+          },
+          "create_time": 1782919200
+        },
+        "parent": "m0039",
+        "children": [
+          "m0041"
+        ]
+      },
+      "m0041": {
+        "id": "m0041",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第6天）今天下班早，我买了你上次说的那家栗子蛋糕。"
+            ]
+          },
+          "create_time": 1782919500
+        },
+        "parent": "m0040",
+        "children": [
+          "m0042"
+        ]
+      },
+      "m0042": {
+        "id": "m0042",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把病历本合上，抬眼看她。“放冰箱。我回去吃。”"
+            ]
+          },
+          "create_time": 1782919800
+        },
+        "parent": "m0041",
+        "children": [
+          "m0043"
+        ]
+      },
+      "m0043": {
+        "id": "m0043",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第6天）你白大褂第二颗扣子又没扣，我看着难受。"
+            ]
+          },
+          "create_time": 1782920100
+        },
+        "parent": "m0042",
+        "children": [
+          "m0044"
+        ]
+      },
+      "m0044": {
+        "id": "m0044",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她解开袖口，露出一点被消毒水泡得发白的手腕。“扣子的事，你比护士长管得还宽。”"
+            ]
+          },
+          "create_time": 1782920400
+        },
+        "parent": "m0043",
+        "children": [
+          "m0045"
+        ]
+      },
+      "m0045": {
+        "id": "m0045",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第6天）外面下雨了，你带伞没有？"
+            ]
+          },
+          "create_time": 1782920700
+        },
+        "parent": "m0044",
+        "children": [
+          "m0046"
+        ]
+      },
+      "m0046": {
+        "id": "m0046",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗外的雨声盖过了走廊的推车声。“带了。在柜子里。”"
+            ]
+          },
+          "create_time": 1782921000
+        },
+        "parent": "m0045",
+        "children": [
+          "m0047"
+        ]
+      },
+      "m0047": {
+        "id": "m0047",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第6天）沈砚，你今天是不是又没吃午饭。"
+            ]
+          },
+          "create_time": 1782921300
+        },
+        "parent": "m0046",
+        "children": [
+          "m0048"
+        ]
+      },
+      "m0048": {
+        "id": "m0048",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他沉默了几秒，指节在杯沿上蹭了一下。“吃了。你别听顾青乱说。”"
+            ]
+          },
+          "create_time": 1782921600
+        },
+        "parent": "m0047",
+        "children": [
+          "m0049"
+        ]
+      },
+      "m0049": {
+        "id": "m0049",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第7天）我把你桌上的咖啡换成热牛奶了，别瞪我。"
+            ]
+          },
+          "create_time": 1782921900
+        },
+        "parent": "m0048",
+        "children": [
+          "m0050"
+        ]
+      },
+      "m0050": {
+        "id": "m0050",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她低头把蛋糕盒的丝带重新系好。“牛奶我喝，咖啡你拿走。”"
+            ]
+          },
+          "create_time": 1782922200
+        },
+        "parent": "m0049",
+        "children": [
+          "m0051"
+        ]
+      },
+      "m0051": {
+        "id": "m0051",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第7天）你值夜班的时候，会想我吗？"
+            ]
+          },
+          "create_time": 1782922500
+        },
+        "parent": "m0050",
+        "children": [
+          "m0052"
+        ]
+      },
+      "m0052": {
+        "id": "m0052",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他往旁边让了让，给她留出半个座位。“会。”"
+            ]
+          },
+          "create_time": 1782922800
+        },
+        "parent": "m0051",
+        "children": [
+          "m0053"
+        ]
+      },
+      "m0053": {
+        "id": "m0053",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第7天）顾青说我们俩像在演一部很慢的电视剧。"
+            ]
+          },
+          "create_time": 1782923100
+        },
+        "parent": "m0052",
+        "children": [
+          "m0054"
+        ]
+      },
+      "m0054": {
+        "id": "m0054",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她没接话，只把热牛奶往他面前推了推。“她说话一向夸张。”"
+            ]
+          },
+          "create_time": 1782923400
+        },
+        "parent": "m0053",
+        "children": [
+          "m0055"
+        ]
+      },
+      "m0055": {
+        "id": "m0055",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第7天）阿岚今天又趴在窗台上偷听我们说话。"
+            ]
+          },
+          "create_time": 1782923700
+        },
+        "parent": "m0054",
+        "children": [
+          "m0056"
+        ]
+      },
+      "m0056": {
+        "id": "m0056",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他看着她湿掉的鞋尖，眉头皱了一下。“阿岚最近很闲。”"
+            ]
+          },
+          "create_time": 1782924000
+        },
+        "parent": "m0055",
+        "children": [
+          "m0057"
+        ]
+      },
+      "m0057": {
+        "id": "m0057",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第8天）你上次答应我的事，还算数吗？"
+            ]
+          },
+          "create_time": 1782924300
+        },
+        "parent": "m0056",
+        "children": [
+          "m0058"
+        ]
+      },
+      "m0058": {
+        "id": "m0058",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把听诊器挂在颈间，金属片轻轻撞了一下。“算数。”"
+            ]
+          },
+          "create_time": 1782924600
+        },
+        "parent": "m0057",
+        "children": [
+          "m0059"
+        ]
+      },
+      "m0059": {
+        "id": "m0059",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第8天）我今天不想回家。"
+            ]
+          },
+          "create_time": 1782924900
+        },
+        "parent": "m0058",
+        "children": [
+          "m0060"
+        ]
+      },
+      "m0060": {
+        "id": "m0060",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他伸手替她把额前的碎发别到耳后。“那就不回。”\n\n阿岚趴在窗台上，尾巴尖晃了晃：“人类的约定，真麻烦。”"
+            ]
+          },
+          "create_time": 1782925200
+        },
+        "parent": "m0059",
+        "children": [
+          "m0061"
+        ]
+      },
+      "m0061": {
+        "id": "m0061",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第8天）你身上有消毒水的味道，但不难闻。"
+            ]
+          },
+          "create_time": 1782925500
+        },
+        "parent": "m0060",
+        "children": [
+          "m0062"
+        ]
+      },
+      "m0062": {
+        "id": "m0062",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "走廊尽头的灯闪了一下。“消毒水味，你不嫌弃就行。”"
+            ]
+          },
+          "create_time": 1782925800
+        },
+        "parent": "m0061",
+        "children": [
+          "m0063"
+        ]
+      },
+      "m0063": {
+        "id": "m0063",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第8天）如果有一天你调去外地，你会告诉我吗？"
+            ]
+          },
+          "create_time": 1782926100
+        },
+        "parent": "m0062",
+        "children": [
+          "m0064"
+        ]
+      },
+      "m0064": {
+        "id": "m0064",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把伞收起来，水珠落在门口的脚垫上。“会告诉你。”"
+            ]
+          },
+          "create_time": 1782926400
+        },
+        "parent": "m0063",
+        "children": [
+          "m0065"
+        ]
+      },
+      "m0065": {
+        "id": "m0065",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第9天）你别总是一个人扛着。"
+            ]
+          },
+          "create_time": 1782926700
+        },
+        "parent": "m0064",
+        "children": [
+          "m0066"
+        ]
+      },
+      "m0066": {
+        "id": "m0066",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他拉开抽屉，又合上。“我没有一个人扛。”"
+            ]
+          },
+          "create_time": 1782927000
+        },
+        "parent": "m0065",
+        "children": [
+          "m0067"
+        ]
+      },
+      "m0067": {
+        "id": "m0067",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第9天）我今天在电梯里看见一个背影，很像你。"
+            ]
+          },
+          "create_time": 1782927300
+        },
+        "parent": "m0066",
+        "children": [
+          "m0068"
+        ]
+      },
+      "m0068": {
+        "id": "m0068",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她靠在门框上，没有进去。“电梯里那个不是我。”"
+            ]
+          },
+          "create_time": 1782927600
+        },
+        "parent": "m0067",
+        "children": [
+          "m0069"
+        ]
+      },
+      "m0069": {
+        "id": "m0069",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第9天）沈砚，你笑一下。"
+            ]
+          },
+          "create_time": 1782927900
+        },
+        "parent": "m0068",
+        "children": [
+          "m0070"
+        ]
+      },
+      "m0070": {
+        "id": "m0070",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把手机翻过去扣在桌上。“笑什么。”"
+            ]
+          },
+          "create_time": 1782928200
+        },
+        "parent": "m0069",
+        "children": [
+          "m0071"
+        ]
+      },
+      "m0071": {
+        "id": "m0071",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第9天）你手怎么这么凉。"
+            ]
+          },
+          "create_time": 1782928500
+        },
+        "parent": "m0070",
+        "children": [
+          "m0072"
+        ]
+      },
+      "m0072": {
+        "id": "m0072",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她盯着他看了很久，最后先移开眼。“刚洗过手。”"
+            ]
+          },
+          "create_time": 1782928800
+        },
+        "parent": "m0071",
+        "children": [
+          "m0073"
+        ]
+      },
+      "m0073": {
+        "id": "m0073",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第10天）我给你留了灯。"
+            ]
+          },
+          "create_time": 1782929100
+        },
+        "parent": "m0072",
+        "children": [
+          "m0074"
+        ]
+      },
+      "m0074": {
+        "id": "m0074",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗台上的风把纸页吹得响了一声。“看见了。”"
+            ]
+          },
+          "create_time": 1782929400
+        },
+        "parent": "m0073",
+        "children": [
+          "m0075"
+        ]
+      },
+      "m0075": {
+        "id": "m0075",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第10天）你昨晚说梦话了。"
+            ]
+          },
+          "create_time": 1782929700
+        },
+        "parent": "m0074",
+        "children": [
+          "m0076"
+        ]
+      },
+      "m0076": {
+        "id": "m0076",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他起身去倒水，杯子只倒了一半。“我说什么了？”\n\n（沈砚没有立刻回答，目光在她脸上停了一会儿。）"
+            ]
+          },
+          "create_time": 1782930000
+        },
+        "parent": "m0075",
+        "children": [
+          "m0077"
+        ]
+      },
+      "m0077": {
+        "id": "m0077",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第10天）周末陪我去看海吧。"
+            ]
+          },
+          "create_time": 1782930300
+        },
+        "parent": "m0076",
+        "children": [
+          "m0078"
+        ]
+      },
+      "m0078": {
+        "id": "m0078",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把手套摘下来，指尖有点红。“周末我调班。”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”"
+            ]
+          },
+          "create_time": 1782930600
+        },
+        "parent": "m0077",
+        "children": [
+          "m0079"
+        ]
+      },
+      "m0079": {
+        "id": "m0079",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第10天）你要是累了，就靠一会儿。"
+            ]
+          },
+          "create_time": 1782930900
+        },
+        "parent": "m0078",
+        "children": [
+          "m0080"
+        ]
+      },
+      "m0080": {
+        "id": "m0080",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他低声说了句什么，被雨声盖住了。“就一会儿。”"
+            ]
+          },
+          "create_time": 1782931200
+        },
+        "parent": "m0079",
+        "children": [
+          "m0081"
+        ]
+      },
+      "m0081": {
+        "id": "m0081",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第11天）今天下班早，我买了你上次说的那家栗子蛋糕。"
+            ]
+          },
+          "create_time": 1782931500
+        },
+        "parent": "m0080",
+        "children": [
+          "m0082"
+        ]
+      },
+      "m0082": {
+        "id": "m0082",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把病历本合上，抬眼看她。“放冰箱。我回去吃。”"
+            ]
+          },
+          "create_time": 1782931800
+        },
+        "parent": "m0081",
+        "children": [
+          "m0083"
+        ]
+      },
+      "m0083": {
+        "id": "m0083",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第11天）你白大褂第二颗扣子又没扣，我看着难受。"
+            ]
+          },
+          "create_time": 1782932100
+        },
+        "parent": "m0082",
+        "children": [
+          "m0084"
+        ]
+      },
+      "m0084": {
+        "id": "m0084",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她解开袖口，露出一点被消毒水泡得发白的手腕。“扣子的事，你比护士长管得还宽。”"
+            ]
+          },
+          "create_time": 1782932400
+        },
+        "parent": "m0083",
+        "children": [
+          "m0085"
+        ]
+      },
+      "m0085": {
+        "id": "m0085",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第11天）外面下雨了，你带伞没有？"
+            ]
+          },
+          "create_time": 1782932700
+        },
+        "parent": "m0084",
+        "children": [
+          "m0086"
+        ]
+      },
+      "m0086": {
+        "id": "m0086",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗外的雨声盖过了走廊的推车声。“带了。在柜子里。”"
+            ]
+          },
+          "create_time": 1782933000
+        },
+        "parent": "m0085",
+        "children": [
+          "m0087"
+        ]
+      },
+      "m0087": {
+        "id": "m0087",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第11天）沈砚，你今天是不是又没吃午饭。"
+            ]
+          },
+          "create_time": 1782933300
+        },
+        "parent": "m0086",
+        "children": [
+          "m0088"
+        ]
+      },
+      "m0088": {
+        "id": "m0088",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他沉默了几秒，指节在杯沿上蹭了一下。“吃了。你别听顾青乱说。”"
+            ]
+          },
+          "create_time": 1782933600
+        },
+        "parent": "m0087",
+        "children": [
+          "m0089"
+        ]
+      },
+      "m0089": {
+        "id": "m0089",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第12天）我把你桌上的咖啡换成热牛奶了，别瞪我。"
+            ]
+          },
+          "create_time": 1782933900
+        },
+        "parent": "m0088",
+        "children": [
+          "m0090"
+        ]
+      },
+      "m0090": {
+        "id": "m0090",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她低头把蛋糕盒的丝带重新系好。“牛奶我喝，咖啡你拿走。”"
+            ]
+          },
+          "create_time": 1782934200
+        },
+        "parent": "m0089",
+        "children": [
+          "m0091"
+        ]
+      },
+      "m0091": {
+        "id": "m0091",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第12天）你值夜班的时候，会想我吗？"
+            ]
+          },
+          "create_time": 1782934500
+        },
+        "parent": "m0090",
+        "children": [
+          "m0092"
+        ]
+      },
+      "m0092": {
+        "id": "m0092",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他往旁边让了让，给她留出半个座位。“会。”"
+            ]
+          },
+          "create_time": 1782934800
+        },
+        "parent": "m0091",
+        "children": [
+          "m0093"
+        ]
+      },
+      "m0093": {
+        "id": "m0093",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第12天）顾青说我们俩像在演一部很慢的电视剧。"
+            ]
+          },
+          "create_time": 1782935100
+        },
+        "parent": "m0092",
+        "children": [
+          "m0094"
+        ]
+      },
+      "m0094": {
+        "id": "m0094",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她没接话，只把热牛奶往他面前推了推。“她说话一向夸张。”"
+            ]
+          },
+          "create_time": 1782935400
+        },
+        "parent": "m0093",
+        "children": [
+          "m0095"
+        ]
+      },
+      "m0095": {
+        "id": "m0095",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第12天）阿岚今天又趴在窗台上偷听我们说话。"
+            ]
+          },
+          "create_time": 1782935700
+        },
+        "parent": "m0094",
+        "children": [
+          "m0096"
+        ]
+      },
+      "m0096": {
+        "id": "m0096",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他看着她湿掉的鞋尖，眉头皱了一下。“阿岚最近很闲。”"
+            ]
+          },
+          "create_time": 1782936000
+        },
+        "parent": "m0095",
+        "children": [
+          "m0097"
+        ]
+      },
+      "m0097": {
+        "id": "m0097",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第13天）你上次答应我的事，还算数吗？"
+            ]
+          },
+          "create_time": 1782936300
+        },
+        "parent": "m0096",
+        "children": [
+          "m0098"
+        ]
+      },
+      "m0098": {
+        "id": "m0098",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把听诊器挂在颈间，金属片轻轻撞了一下。“算数。”"
+            ]
+          },
+          "create_time": 1782936600
+        },
+        "parent": "m0097",
+        "children": [
+          "m0099"
+        ]
+      },
+      "m0099": {
+        "id": "m0099",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第13天）我今天不想回家。"
+            ]
+          },
+          "create_time": 1782936900
+        },
+        "parent": "m0098",
+        "children": [
+          "m0100"
+        ]
+      },
+      "m0100": {
+        "id": "m0100",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他伸手替她把额前的碎发别到耳后。“那就不回。”"
+            ]
+          },
+          "create_time": 1782937200
+        },
+        "parent": "m0099",
+        "children": [
+          "m0101"
+        ]
+      },
+      "m0101": {
+        "id": "m0101",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第13天）你身上有消毒水的味道，但不难闻。"
+            ]
+          },
+          "create_time": 1782937500
+        },
+        "parent": "m0100",
+        "children": [
+          "m0102"
+        ]
+      },
+      "m0102": {
+        "id": "m0102",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "走廊尽头的灯闪了一下。“消毒水味，你不嫌弃就行。”"
+            ]
+          },
+          "create_time": 1782937800
+        },
+        "parent": "m0101",
+        "children": [
+          "m0103"
+        ]
+      },
+      "m0103": {
+        "id": "m0103",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第13天）如果有一天你调去外地，你会告诉我吗？"
+            ]
+          },
+          "create_time": 1782938100
+        },
+        "parent": "m0102",
+        "children": [
+          "m0104"
+        ]
+      },
+      "m0104": {
+        "id": "m0104",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把伞收起来，水珠落在门口的脚垫上。“会告诉你。”"
+            ]
+          },
+          "create_time": 1782938400
+        },
+        "parent": "m0103",
+        "children": [
+          "m0105"
+        ]
+      },
+      "m0105": {
+        "id": "m0105",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第14天）你别总是一个人扛着。"
+            ]
+          },
+          "create_time": 1782938700
+        },
+        "parent": "m0104",
+        "children": [
+          "m0106"
+        ]
+      },
+      "m0106": {
+        "id": "m0106",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他拉开抽屉，又合上。“我没有一个人扛。”"
+            ]
+          },
+          "create_time": 1782939000
+        },
+        "parent": "m0105",
+        "children": [
+          "m0107"
+        ]
+      },
+      "m0107": {
+        "id": "m0107",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第14天）我今天在电梯里看见一个背影，很像你。"
+            ]
+          },
+          "create_time": 1782939300
+        },
+        "parent": "m0106",
+        "children": [
+          "m0108"
+        ]
+      },
+      "m0108": {
+        "id": "m0108",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她靠在门框上，没有进去。“电梯里那个不是我。”"
+            ]
+          },
+          "create_time": 1782939600
+        },
+        "parent": "m0107",
+        "children": [
+          "m0109"
+        ]
+      },
+      "m0109": {
+        "id": "m0109",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第14天）沈砚，你笑一下。"
+            ]
+          },
+          "create_time": 1782939900
+        },
+        "parent": "m0108",
+        "children": [
+          "m0110"
+        ]
+      },
+      "m0110": {
+        "id": "m0110",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把手机翻过去扣在桌上。“笑什么。”"
+            ]
+          },
+          "create_time": 1782940200
+        },
+        "parent": "m0109",
+        "children": [
+          "m0111"
+        ]
+      },
+      "m0111": {
+        "id": "m0111",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第14天）你手怎么这么凉。"
+            ]
+          },
+          "create_time": 1782940500
+        },
+        "parent": "m0110",
+        "children": [
+          "m0112"
+        ]
+      },
+      "m0112": {
+        "id": "m0112",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她盯着他看了很久，最后先移开眼。“刚洗过手。”"
+            ]
+          },
+          "create_time": 1782940800
+        },
+        "parent": "m0111",
+        "children": [
+          "m0113"
+        ]
+      },
+      "m0113": {
+        "id": "m0113",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第15天）我给你留了灯。"
+            ]
+          },
+          "create_time": 1782941100
+        },
+        "parent": "m0112",
+        "children": [
+          "m0114"
+        ]
+      },
+      "m0114": {
+        "id": "m0114",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗台上的风把纸页吹得响了一声。“看见了。”"
+            ]
+          },
+          "create_time": 1782941400
+        },
+        "parent": "m0113",
+        "children": [
+          "m0115"
+        ]
+      },
+      "m0115": {
+        "id": "m0115",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第15天）你昨晚说梦话了。"
+            ]
+          },
+          "create_time": 1782941700
+        },
+        "parent": "m0114",
+        "children": [
+          "m0116"
+        ]
+      },
+      "m0116": {
+        "id": "m0116",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他起身去倒水，杯子只倒了一半。“我说什么了？”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”"
+            ]
+          },
+          "create_time": 1782942000
+        },
+        "parent": "m0115",
+        "children": [
+          "m0117"
+        ]
+      },
+      "m0117": {
+        "id": "m0117",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第15天）周末陪我去看海吧。"
+            ]
+          },
+          "create_time": 1782942300
+        },
+        "parent": "m0116",
+        "children": [
+          "m0118"
+        ]
+      },
+      "m0118": {
+        "id": "m0118",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把手套摘下来，指尖有点红。“周末我调班。”\n\n阿岚趴在窗台上，尾巴尖晃了晃：“人类的约定，真麻烦。”"
+            ]
+          },
+          "create_time": 1782942600
+        },
+        "parent": "m0117",
+        "children": [
+          "m0119"
+        ]
+      },
+      "m0119": {
+        "id": "m0119",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第15天）你要是累了，就靠一会儿。"
+            ]
+          },
+          "create_time": 1782942900
+        },
+        "parent": "m0118",
+        "children": [
+          "m0120"
+        ]
+      },
+      "m0120": {
+        "id": "m0120",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他低声说了句什么，被雨声盖住了。“就一会儿。”"
+            ]
+          },
+          "create_time": 1782943200
+        },
+        "parent": "m0119",
+        "children": [
+          "m0121"
+        ]
+      },
+      "m0121": {
+        "id": "m0121",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第16天）今天下班早，我买了你上次说的那家栗子蛋糕。"
+            ]
+          },
+          "create_time": 1782943500
+        },
+        "parent": "m0120",
+        "children": [
+          "m0122"
+        ]
+      },
+      "m0122": {
+        "id": "m0122",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把病历本合上，抬眼看她。“放冰箱。我回去吃。”"
+            ]
+          },
+          "create_time": 1782943800
+        },
+        "parent": "m0121",
+        "children": [
+          "m0123"
+        ]
+      },
+      "m0123": {
+        "id": "m0123",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第16天）你白大褂第二颗扣子又没扣，我看着难受。"
+            ]
+          },
+          "create_time": 1782944100
+        },
+        "parent": "m0122",
+        "children": [
+          "m0124"
+        ]
+      },
+      "m0124": {
+        "id": "m0124",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她解开袖口，露出一点被消毒水泡得发白的手腕。“扣子的事，你比护士长管得还宽。”"
+            ]
+          },
+          "create_time": 1782944400
+        },
+        "parent": "m0123",
+        "children": [
+          "m0125"
+        ]
+      },
+      "m0125": {
+        "id": "m0125",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第16天）外面下雨了，你带伞没有？"
+            ]
+          },
+          "create_time": 1782944700
+        },
+        "parent": "m0124",
+        "children": [
+          "m0126"
+        ]
+      },
+      "m0126": {
+        "id": "m0126",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗外的雨声盖过了走廊的推车声。“带了。在柜子里。”"
+            ]
+          },
+          "create_time": 1782945000
+        },
+        "parent": "m0125",
+        "children": [
+          "m0127"
+        ]
+      },
+      "m0127": {
+        "id": "m0127",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第16天）沈砚，你今天是不是又没吃午饭。"
+            ]
+          },
+          "create_time": 1782945300
+        },
+        "parent": "m0126",
+        "children": [
+          "m0128"
+        ]
+      },
+      "m0128": {
+        "id": "m0128",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他沉默了几秒，指节在杯沿上蹭了一下。“吃了。你别听顾青乱说。”"
+            ]
+          },
+          "create_time": 1782945600
+        },
+        "parent": "m0127",
+        "children": [
+          "m0129"
+        ]
+      },
+      "m0129": {
+        "id": "m0129",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第17天）我把你桌上的咖啡换成热牛奶了，别瞪我。"
+            ]
+          },
+          "create_time": 1782945900
+        },
+        "parent": "m0128",
+        "children": [
+          "m0130"
+        ]
+      },
+      "m0130": {
+        "id": "m0130",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她低头把蛋糕盒的丝带重新系好。“牛奶我喝，咖啡你拿走。”"
+            ]
+          },
+          "create_time": 1782946200
+        },
+        "parent": "m0129",
+        "children": [
+          "m0131"
+        ]
+      },
+      "m0131": {
+        "id": "m0131",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第17天）你值夜班的时候，会想我吗？"
+            ]
+          },
+          "create_time": 1782946500
+        },
+        "parent": "m0130",
+        "children": [
+          "m0132"
+        ]
+      },
+      "m0132": {
+        "id": "m0132",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他往旁边让了让，给她留出半个座位。“会。”"
+            ]
+          },
+          "create_time": 1782946800
+        },
+        "parent": "m0131",
+        "children": [
+          "m0133"
+        ]
+      },
+      "m0133": {
+        "id": "m0133",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第17天）顾青说我们俩像在演一部很慢的电视剧。"
+            ]
+          },
+          "create_time": 1782947100
+        },
+        "parent": "m0132",
+        "children": [
+          "m0134"
+        ]
+      },
+      "m0134": {
+        "id": "m0134",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她没接话，只把热牛奶往他面前推了推。“她说话一向夸张。”"
+            ]
+          },
+          "create_time": 1782947400
+        },
+        "parent": "m0133",
+        "children": [
+          "m0135"
+        ]
+      },
+      "m0135": {
+        "id": "m0135",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第17天）阿岚今天又趴在窗台上偷听我们说话。"
+            ]
+          },
+          "create_time": 1782947700
+        },
+        "parent": "m0134",
+        "children": [
+          "m0136"
+        ]
+      },
+      "m0136": {
+        "id": "m0136",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他看着她湿掉的鞋尖，眉头皱了一下。“阿岚最近很闲。”"
+            ]
+          },
+          "create_time": 1782948000
+        },
+        "parent": "m0135",
+        "children": [
+          "m0137"
+        ]
+      },
+      "m0137": {
+        "id": "m0137",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第18天）你上次答应我的事，还算数吗？"
+            ]
+          },
+          "create_time": 1782948300
+        },
+        "parent": "m0136",
+        "children": [
+          "m0138"
+        ]
+      },
+      "m0138": {
+        "id": "m0138",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把听诊器挂在颈间，金属片轻轻撞了一下。“算数。”"
+            ]
+          },
+          "create_time": 1782948600
+        },
+        "parent": "m0137",
+        "children": [
+          "m0139"
+        ]
+      },
+      "m0139": {
+        "id": "m0139",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第18天）我今天不想回家。"
+            ]
+          },
+          "create_time": 1782948900
+        },
+        "parent": "m0138",
+        "children": [
+          "m0140"
+        ]
+      },
+      "m0140": {
+        "id": "m0140",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他伸手替她把额前的碎发别到耳后。“那就不回。”"
+            ]
+          },
+          "create_time": 1782949200
+        },
+        "parent": "m0139",
+        "children": [
+          "m0141"
+        ]
+      },
+      "m0141": {
+        "id": "m0141",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第18天）你身上有消毒水的味道，但不难闻。"
+            ]
+          },
+          "create_time": 1782949500
+        },
+        "parent": "m0140",
+        "children": [
+          "m0142"
+        ]
+      },
+      "m0142": {
+        "id": "m0142",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "走廊尽头的灯闪了一下。“消毒水味，你不嫌弃就行。”"
+            ]
+          },
+          "create_time": 1782949800
+        },
+        "parent": "m0141",
+        "children": [
+          "m0143"
+        ]
+      },
+      "m0143": {
+        "id": "m0143",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第18天）如果有一天你调去外地，你会告诉我吗？"
+            ]
+          },
+          "create_time": 1782950100
+        },
+        "parent": "m0142",
+        "children": [
+          "m0144"
+        ]
+      },
+      "m0144": {
+        "id": "m0144",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把伞收起来，水珠落在门口的脚垫上。“会告诉你。”"
+            ]
+          },
+          "create_time": 1782950400
+        },
+        "parent": "m0143",
+        "children": [
+          "m0145"
+        ]
+      },
+      "m0145": {
+        "id": "m0145",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第19天）你别总是一个人扛着。"
+            ]
+          },
+          "create_time": 1782950700
+        },
+        "parent": "m0144",
+        "children": [
+          "m0146"
+        ]
+      },
+      "m0146": {
+        "id": "m0146",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他拉开抽屉，又合上。“我没有一个人扛。”"
+            ]
+          },
+          "create_time": 1782951000
+        },
+        "parent": "m0145",
+        "children": [
+          "m0147"
+        ]
+      },
+      "m0147": {
+        "id": "m0147",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第19天）我今天在电梯里看见一个背影，很像你。"
+            ]
+          },
+          "create_time": 1782951300
+        },
+        "parent": "m0146",
+        "children": [
+          "m0148"
+        ]
+      },
+      "m0148": {
+        "id": "m0148",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她靠在门框上，没有进去。“电梯里那个不是我。”"
+            ]
+          },
+          "create_time": 1782951600
+        },
+        "parent": "m0147",
+        "children": [
+          "m0149"
+        ]
+      },
+      "m0149": {
+        "id": "m0149",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第19天）沈砚，你笑一下。"
+            ]
+          },
+          "create_time": 1782951900
+        },
+        "parent": "m0148",
+        "children": [
+          "m0150"
+        ]
+      },
+      "m0150": {
+        "id": "m0150",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把手机翻过去扣在桌上。“笑什么。”\n\n（沈砚没有立刻回答，目光在她脸上停了一会儿。）"
+            ]
+          },
+          "create_time": 1782952200
+        },
+        "parent": "m0149",
+        "children": [
+          "m0151"
+        ]
+      },
+      "m0151": {
+        "id": "m0151",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第19天）你手怎么这么凉。"
+            ]
+          },
+          "create_time": 1782952500
+        },
+        "parent": "m0150",
+        "children": [
+          "m0152"
+        ]
+      },
+      "m0152": {
+        "id": "m0152",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她盯着他看了很久，最后先移开眼。“刚洗过手。”"
+            ]
+          },
+          "create_time": 1782952800
+        },
+        "parent": "m0151",
+        "children": [
+          "m0153"
+        ]
+      },
+      "m0153": {
+        "id": "m0153",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第20天）我给你留了灯。"
+            ]
+          },
+          "create_time": 1782953100
+        },
+        "parent": "m0152",
+        "children": [
+          "m0154"
+        ]
+      },
+      "m0154": {
+        "id": "m0154",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗台上的风把纸页吹得响了一声。“看见了。”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”"
+            ]
+          },
+          "create_time": 1782953400
+        },
+        "parent": "m0153",
+        "children": [
+          "m0155"
+        ]
+      },
+      "m0155": {
+        "id": "m0155",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第20天）你昨晚说梦话了。"
+            ]
+          },
+          "create_time": 1782953700
+        },
+        "parent": "m0154",
+        "children": [
+          "m0156"
+        ]
+      },
+      "m0156": {
+        "id": "m0156",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他起身去倒水，杯子只倒了一半。“我说什么了？”"
+            ]
+          },
+          "create_time": 1782954000
+        },
+        "parent": "m0155",
+        "children": [
+          "m0157"
+        ]
+      },
+      "m0157": {
+        "id": "m0157",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第20天）周末陪我去看海吧。"
+            ]
+          },
+          "create_time": 1782954300
+        },
+        "parent": "m0156",
+        "children": [
+          "m0158"
+        ]
+      },
+      "m0158": {
+        "id": "m0158",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把手套摘下来，指尖有点红。“周末我调班。”"
+            ]
+          },
+          "create_time": 1782954600
+        },
+        "parent": "m0157",
+        "children": [
+          "m0159"
+        ]
+      },
+      "m0159": {
+        "id": "m0159",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第20天）你要是累了，就靠一会儿。"
+            ]
+          },
+          "create_time": 1782954900
+        },
+        "parent": "m0158",
+        "children": [
+          "m0160"
+        ]
+      },
+      "m0160": {
+        "id": "m0160",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他低声说了句什么，被雨声盖住了。“就一会儿。”"
+            ]
+          },
+          "create_time": 1782955200
+        },
+        "parent": "m0159",
+        "children": [
+          "m0161"
+        ]
+      },
+      "m0161": {
+        "id": "m0161",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第21天）今天下班早，我买了你上次说的那家栗子蛋糕。"
+            ]
+          },
+          "create_time": 1782955500
+        },
+        "parent": "m0160",
+        "children": [
+          "m0162"
+        ]
+      },
+      "m0162": {
+        "id": "m0162",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把病历本合上，抬眼看她。“放冰箱。我回去吃。”"
+            ]
+          },
+          "create_time": 1782955800
+        },
+        "parent": "m0161",
+        "children": [
+          "m0163"
+        ]
+      },
+      "m0163": {
+        "id": "m0163",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第21天）你白大褂第二颗扣子又没扣，我看着难受。"
+            ]
+          },
+          "create_time": 1782956100
+        },
+        "parent": "m0162",
+        "children": [
+          "m0164"
+        ]
+      },
+      "m0164": {
+        "id": "m0164",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她解开袖口，露出一点被消毒水泡得发白的手腕。“扣子的事，你比护士长管得还宽。”"
+            ]
+          },
+          "create_time": 1782956400
+        },
+        "parent": "m0163",
+        "children": [
+          "m0165"
+        ]
+      },
+      "m0165": {
+        "id": "m0165",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第21天）外面下雨了，你带伞没有？"
+            ]
+          },
+          "create_time": 1782956700
+        },
+        "parent": "m0164",
+        "children": [
+          "m0166"
+        ]
+      },
+      "m0166": {
+        "id": "m0166",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗外的雨声盖过了走廊的推车声。“带了。在柜子里。”"
+            ]
+          },
+          "create_time": 1782957000
+        },
+        "parent": "m0165",
+        "children": [
+          "m0167"
+        ]
+      },
+      "m0167": {
+        "id": "m0167",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第21天）沈砚，你今天是不是又没吃午饭。"
+            ]
+          },
+          "create_time": 1782957300
+        },
+        "parent": "m0166",
+        "children": [
+          "m0168"
+        ]
+      },
+      "m0168": {
+        "id": "m0168",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他沉默了几秒，指节在杯沿上蹭了一下。“吃了。你别听顾青乱说。”"
+            ]
+          },
+          "create_time": 1782957600
+        },
+        "parent": "m0167",
+        "children": [
+          "m0169"
+        ]
+      },
+      "m0169": {
+        "id": "m0169",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第22天）我把你桌上的咖啡换成热牛奶了，别瞪我。"
+            ]
+          },
+          "create_time": 1782957900
+        },
+        "parent": "m0168",
+        "children": [
+          "m0170"
+        ]
+      },
+      "m0170": {
+        "id": "m0170",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她低头把蛋糕盒的丝带重新系好。“牛奶我喝，咖啡你拿走。”"
+            ]
+          },
+          "create_time": 1782958200
+        },
+        "parent": "m0169",
+        "children": [
+          "m0171"
+        ]
+      },
+      "m0171": {
+        "id": "m0171",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第22天）你值夜班的时候，会想我吗？"
+            ]
+          },
+          "create_time": 1782958500
+        },
+        "parent": "m0170",
+        "children": [
+          "m0172"
+        ]
+      },
+      "m0172": {
+        "id": "m0172",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他往旁边让了让，给她留出半个座位。“会。”"
+            ]
+          },
+          "create_time": 1782958800
+        },
+        "parent": "m0171",
+        "children": [
+          "m0173"
+        ]
+      },
+      "m0173": {
+        "id": "m0173",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第22天）顾青说我们俩像在演一部很慢的电视剧。"
+            ]
+          },
+          "create_time": 1782959100
+        },
+        "parent": "m0172",
+        "children": [
+          "m0174"
+        ]
+      },
+      "m0174": {
+        "id": "m0174",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她没接话，只把热牛奶往他面前推了推。“她说话一向夸张。”"
+            ]
+          },
+          "create_time": 1782959400
+        },
+        "parent": "m0173",
+        "children": [
+          "m0175"
+        ]
+      },
+      "m0175": {
+        "id": "m0175",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第22天）阿岚今天又趴在窗台上偷听我们说话。"
+            ]
+          },
+          "create_time": 1782959700
+        },
+        "parent": "m0174",
+        "children": [
+          "m0176"
+        ]
+      },
+      "m0176": {
+        "id": "m0176",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他看着她湿掉的鞋尖，眉头皱了一下。“阿岚最近很闲。”\n\n阿岚趴在窗台上，尾巴尖晃了晃：“人类的约定，真麻烦。”"
+            ]
+          },
+          "create_time": 1782960000
+        },
+        "parent": "m0175",
+        "children": [
+          "m0177"
+        ]
+      },
+      "m0177": {
+        "id": "m0177",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第23天）你上次答应我的事，还算数吗？"
+            ]
+          },
+          "create_time": 1782960300
+        },
+        "parent": "m0176",
+        "children": [
+          "m0178"
+        ]
+      },
+      "m0178": {
+        "id": "m0178",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把听诊器挂在颈间，金属片轻轻撞了一下。“算数。”"
+            ]
+          },
+          "create_time": 1782960600
+        },
+        "parent": "m0177",
+        "children": [
+          "m0179"
+        ]
+      },
+      "m0179": {
+        "id": "m0179",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第23天）我今天不想回家。"
+            ]
+          },
+          "create_time": 1782960900
+        },
+        "parent": "m0178",
+        "children": [
+          "m0180"
+        ]
+      },
+      "m0180": {
+        "id": "m0180",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他伸手替她把额前的碎发别到耳后。“那就不回。”"
+            ]
+          },
+          "create_time": 1782961200
+        },
+        "parent": "m0179",
+        "children": [
+          "m0181"
+        ]
+      },
+      "m0181": {
+        "id": "m0181",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第23天）你身上有消毒水的味道，但不难闻。"
+            ]
+          },
+          "create_time": 1782961500
+        },
+        "parent": "m0180",
+        "children": [
+          "m0182"
+        ]
+      },
+      "m0182": {
+        "id": "m0182",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "走廊尽头的灯闪了一下。“消毒水味，你不嫌弃就行。”"
+            ]
+          },
+          "create_time": 1782961800
+        },
+        "parent": "m0181",
+        "children": [
+          "m0183"
+        ]
+      },
+      "m0183": {
+        "id": "m0183",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第23天）如果有一天你调去外地，你会告诉我吗？"
+            ]
+          },
+          "create_time": 1782962100
+        },
+        "parent": "m0182",
+        "children": [
+          "m0184"
+        ]
+      },
+      "m0184": {
+        "id": "m0184",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把伞收起来，水珠落在门口的脚垫上。“会告诉你。”"
+            ]
+          },
+          "create_time": 1782962400
+        },
+        "parent": "m0183",
+        "children": [
+          "m0185"
+        ]
+      },
+      "m0185": {
+        "id": "m0185",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第24天）你别总是一个人扛着。"
+            ]
+          },
+          "create_time": 1782962700
+        },
+        "parent": "m0184",
+        "children": [
+          "m0186"
+        ]
+      },
+      "m0186": {
+        "id": "m0186",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他拉开抽屉，又合上。“我没有一个人扛。”"
+            ]
+          },
+          "create_time": 1782963000
+        },
+        "parent": "m0185",
+        "children": [
+          "m0187"
+        ]
+      },
+      "m0187": {
+        "id": "m0187",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第24天）我今天在电梯里看见一个背影，很像你。"
+            ]
+          },
+          "create_time": 1782963300
+        },
+        "parent": "m0186",
+        "children": [
+          "m0188"
+        ]
+      },
+      "m0188": {
+        "id": "m0188",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她靠在门框上，没有进去。“电梯里那个不是我。”"
+            ]
+          },
+          "create_time": 1782963600
+        },
+        "parent": "m0187",
+        "children": [
+          "m0189"
+        ]
+      },
+      "m0189": {
+        "id": "m0189",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第24天）沈砚，你笑一下。"
+            ]
+          },
+          "create_time": 1782963900
+        },
+        "parent": "m0188",
+        "children": [
+          "m0190"
+        ]
+      },
+      "m0190": {
+        "id": "m0190",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把手机翻过去扣在桌上。“笑什么。”"
+            ]
+          },
+          "create_time": 1782964200
+        },
+        "parent": "m0189",
+        "children": [
+          "m0191"
+        ]
+      },
+      "m0191": {
+        "id": "m0191",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第24天）你手怎么这么凉。"
+            ]
+          },
+          "create_time": 1782964500
+        },
+        "parent": "m0190",
+        "children": [
+          "m0192"
+        ]
+      },
+      "m0192": {
+        "id": "m0192",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她盯着他看了很久，最后先移开眼。“刚洗过手。”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”"
+            ]
+          },
+          "create_time": 1782964800
+        },
+        "parent": "m0191",
+        "children": [
+          "m0193"
+        ]
+      },
+      "m0193": {
+        "id": "m0193",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第25天）我给你留了灯。"
+            ]
+          },
+          "create_time": 1782965100
+        },
+        "parent": "m0192",
+        "children": [
+          "m0194"
+        ]
+      },
+      "m0194": {
+        "id": "m0194",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗台上的风把纸页吹得响了一声。“看见了。”"
+            ]
+          },
+          "create_time": 1782965400
+        },
+        "parent": "m0193",
+        "children": [
+          "m0195"
+        ]
+      },
+      "m0195": {
+        "id": "m0195",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第25天）你昨晚说梦话了。"
+            ]
+          },
+          "create_time": 1782965700
+        },
+        "parent": "m0194",
+        "children": [
+          "m0196"
+        ]
+      },
+      "m0196": {
+        "id": "m0196",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他起身去倒水，杯子只倒了一半。“我说什么了？”"
+            ]
+          },
+          "create_time": 1782966000
+        },
+        "parent": "m0195",
+        "children": [
+          "m0197"
+        ]
+      },
+      "m0197": {
+        "id": "m0197",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第25天）周末陪我去看海吧。"
+            ]
+          },
+          "create_time": 1782966300
+        },
+        "parent": "m0196",
+        "children": [
+          "m0198"
+        ]
+      },
+      "m0198": {
+        "id": "m0198",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把手套摘下来，指尖有点红。“周末我调班。”"
+            ]
+          },
+          "create_time": 1782966600
+        },
+        "parent": "m0197",
+        "children": [
+          "m0199"
+        ]
+      },
+      "m0199": {
+        "id": "m0199",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第25天）你要是累了，就靠一会儿。"
+            ]
+          },
+          "create_time": 1782966900
+        },
+        "parent": "m0198",
+        "children": [
+          "m0200"
+        ]
+      },
+      "m0200": {
+        "id": "m0200",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他低声说了句什么，被雨声盖住了。“就一会儿。”"
+            ]
+          },
+          "create_time": 1782967200
+        },
+        "parent": "m0199",
+        "children": [
+          "m0201"
+        ]
+      },
+      "m0201": {
+        "id": "m0201",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第26天）今天下班早，我买了你上次说的那家栗子蛋糕。"
+            ]
+          },
+          "create_time": 1782967500
+        },
+        "parent": "m0200",
+        "children": [
+          "m0202"
+        ]
+      },
+      "m0202": {
+        "id": "m0202",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把病历本合上，抬眼看她。“放冰箱。我回去吃。”"
+            ]
+          },
+          "create_time": 1782967800
+        },
+        "parent": "m0201",
+        "children": [
+          "m0203"
+        ]
+      },
+      "m0203": {
+        "id": "m0203",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第26天）你白大褂第二颗扣子又没扣，我看着难受。"
+            ]
+          },
+          "create_time": 1782968100
+        },
+        "parent": "m0202",
+        "children": [
+          "m0204"
+        ]
+      },
+      "m0204": {
+        "id": "m0204",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她解开袖口，露出一点被消毒水泡得发白的手腕。“扣子的事，你比护士长管得还宽。”"
+            ]
+          },
+          "create_time": 1782968400
+        },
+        "parent": "m0203",
+        "children": [
+          "m0205"
+        ]
+      },
+      "m0205": {
+        "id": "m0205",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第26天）外面下雨了，你带伞没有？"
+            ]
+          },
+          "create_time": 1782968700
+        },
+        "parent": "m0204",
+        "children": [
+          "m0206"
+        ]
+      },
+      "m0206": {
+        "id": "m0206",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗外的雨声盖过了走廊的推车声。“带了。在柜子里。”"
+            ]
+          },
+          "create_time": 1782969000
+        },
+        "parent": "m0205",
+        "children": [
+          "m0207"
+        ]
+      },
+      "m0207": {
+        "id": "m0207",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第26天）沈砚，你今天是不是又没吃午饭。"
+            ]
+          },
+          "create_time": 1782969300
+        },
+        "parent": "m0206",
+        "children": [
+          "m0208"
+        ]
+      },
+      "m0208": {
+        "id": "m0208",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他沉默了几秒，指节在杯沿上蹭了一下。“吃了。你别听顾青乱说。”"
+            ]
+          },
+          "create_time": 1782969600
+        },
+        "parent": "m0207",
+        "children": [
+          "m0209"
+        ]
+      },
+      "m0209": {
+        "id": "m0209",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第27天）我把你桌上的咖啡换成热牛奶了，别瞪我。"
+            ]
+          },
+          "create_time": 1782969900
+        },
+        "parent": "m0208",
+        "children": [
+          "m0210"
+        ]
+      },
+      "m0210": {
+        "id": "m0210",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她低头把蛋糕盒的丝带重新系好。“牛奶我喝，咖啡你拿走。”"
+            ]
+          },
+          "create_time": 1782970200
+        },
+        "parent": "m0209",
+        "children": [
+          "m0211"
+        ]
+      },
+      "m0211": {
+        "id": "m0211",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第27天）你值夜班的时候，会想我吗？"
+            ]
+          },
+          "create_time": 1782970500
+        },
+        "parent": "m0210",
+        "children": [
+          "m0212"
+        ]
+      },
+      "m0212": {
+        "id": "m0212",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他往旁边让了让，给她留出半个座位。“会。”"
+            ]
+          },
+          "create_time": 1782970800
+        },
+        "parent": "m0211",
+        "children": [
+          "m0213"
+        ]
+      },
+      "m0213": {
+        "id": "m0213",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第27天）顾青说我们俩像在演一部很慢的电视剧。"
+            ]
+          },
+          "create_time": 1782971100
+        },
+        "parent": "m0212",
+        "children": [
+          "m0214"
+        ]
+      },
+      "m0214": {
+        "id": "m0214",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她没接话，只把热牛奶往他面前推了推。“她说话一向夸张。”"
+            ]
+          },
+          "create_time": 1782971400
+        },
+        "parent": "m0213",
+        "children": [
+          "m0215"
+        ]
+      },
+      "m0215": {
+        "id": "m0215",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第27天）阿岚今天又趴在窗台上偷听我们说话。"
+            ]
+          },
+          "create_time": 1782971700
+        },
+        "parent": "m0214",
+        "children": [
+          "m0216"
+        ]
+      },
+      "m0216": {
+        "id": "m0216",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他看着她湿掉的鞋尖，眉头皱了一下。“阿岚最近很闲。”"
+            ]
+          },
+          "create_time": 1782972000
+        },
+        "parent": "m0215",
+        "children": [
+          "m0217"
+        ]
+      },
+      "m0217": {
+        "id": "m0217",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第28天）你上次答应我的事，还算数吗？"
+            ]
+          },
+          "create_time": 1782972300
+        },
+        "parent": "m0216",
+        "children": [
+          "m0218"
+        ]
+      },
+      "m0218": {
+        "id": "m0218",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把听诊器挂在颈间，金属片轻轻撞了一下。“算数。”"
+            ]
+          },
+          "create_time": 1782972600
+        },
+        "parent": "m0217",
+        "children": [
+          "m0219"
+        ]
+      },
+      "m0219": {
+        "id": "m0219",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第28天）我今天不想回家。"
+            ]
+          },
+          "create_time": 1782972900
+        },
+        "parent": "m0218",
+        "children": [
+          "m0220"
+        ]
+      },
+      "m0220": {
+        "id": "m0220",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他伸手替她把额前的碎发别到耳后。“那就不回。”"
+            ]
+          },
+          "create_time": 1782973200
+        },
+        "parent": "m0219",
+        "children": [
+          "m0221"
+        ]
+      },
+      "m0221": {
+        "id": "m0221",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第28天）你身上有消毒水的味道，但不难闻。"
+            ]
+          },
+          "create_time": 1782973500
+        },
+        "parent": "m0220",
+        "children": [
+          "m0222"
+        ]
+      },
+      "m0222": {
+        "id": "m0222",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "走廊尽头的灯闪了一下。“消毒水味，你不嫌弃就行。”"
+            ]
+          },
+          "create_time": 1782973800
+        },
+        "parent": "m0221",
+        "children": [
+          "m0223"
+        ]
+      },
+      "m0223": {
+        "id": "m0223",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第28天）如果有一天你调去外地，你会告诉我吗？"
+            ]
+          },
+          "create_time": 1782974100
+        },
+        "parent": "m0222",
+        "children": [
+          "m0224"
+        ]
+      },
+      "m0224": {
+        "id": "m0224",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把伞收起来，水珠落在门口的脚垫上。“会告诉你。”\n\n（沈砚没有立刻回答，目光在她脸上停了一会儿。）"
+            ]
+          },
+          "create_time": 1782974400
+        },
+        "parent": "m0223",
+        "children": [
+          "m0225"
+        ]
+      },
+      "m0225": {
+        "id": "m0225",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第29天）你别总是一个人扛着。"
+            ]
+          },
+          "create_time": 1782974700
+        },
+        "parent": "m0224",
+        "children": [
+          "m0226"
+        ]
+      },
+      "m0226": {
+        "id": "m0226",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他拉开抽屉，又合上。“我没有一个人扛。”"
+            ]
+          },
+          "create_time": 1782975000
+        },
+        "parent": "m0225",
+        "children": [
+          "m0227"
+        ]
+      },
+      "m0227": {
+        "id": "m0227",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第29天）我今天在电梯里看见一个背影，很像你。"
+            ]
+          },
+          "create_time": 1782975300
+        },
+        "parent": "m0226",
+        "children": [
+          "m0228"
+        ]
+      },
+      "m0228": {
+        "id": "m0228",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她靠在门框上，没有进去。“电梯里那个不是我。”"
+            ]
+          },
+          "create_time": 1782975600
+        },
+        "parent": "m0227",
+        "children": [
+          "m0229"
+        ]
+      },
+      "m0229": {
+        "id": "m0229",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第29天）沈砚，你笑一下。"
+            ]
+          },
+          "create_time": 1782975900
+        },
+        "parent": "m0228",
+        "children": [
+          "m0230"
+        ]
+      },
+      "m0230": {
+        "id": "m0230",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他把手机翻过去扣在桌上。“笑什么。”\n\n顾青从门口探进半个身子：“你们俩又背着我吃蛋糕？”"
+            ]
+          },
+          "create_time": 1782976200
+        },
+        "parent": "m0229",
+        "children": [
+          "m0231"
+        ]
+      },
+      "m0231": {
+        "id": "m0231",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第29天）你手怎么这么凉。"
+            ]
+          },
+          "create_time": 1782976500
+        },
+        "parent": "m0230",
+        "children": [
+          "m0232"
+        ]
+      },
+      "m0232": {
+        "id": "m0232",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她盯着他看了很久，最后先移开眼。“刚洗过手。”"
+            ]
+          },
+          "create_time": 1782976800
+        },
+        "parent": "m0231",
+        "children": [
+          "m0233"
+        ]
+      },
+      "m0233": {
+        "id": "m0233",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第30天）我给你留了灯。"
+            ]
+          },
+          "create_time": 1782977100
+        },
+        "parent": "m0232",
+        "children": [
+          "m0234"
+        ]
+      },
+      "m0234": {
+        "id": "m0234",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "窗台上的风把纸页吹得响了一声。“看见了。”\n\n阿岚趴在窗台上，尾巴尖晃了晃：“人类的约定，真麻烦。”"
+            ]
+          },
+          "create_time": 1782977400
+        },
+        "parent": "m0233",
+        "children": [
+          "m0235"
+        ]
+      },
+      "m0235": {
+        "id": "m0235",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第30天）你昨晚说梦话了。"
+            ]
+          },
+          "create_time": 1782977700
+        },
+        "parent": "m0234",
+        "children": [
+          "m0236"
+        ]
+      },
+      "m0236": {
+        "id": "m0236",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他起身去倒水，杯子只倒了一半。“我说什么了？”"
+            ]
+          },
+          "create_time": 1782978000
+        },
+        "parent": "m0235",
+        "children": [
+          "m0237"
+        ]
+      },
+      "m0237": {
+        "id": "m0237",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第30天）周末陪我去看海吧。"
+            ]
+          },
+          "create_time": 1782978300
+        },
+        "parent": "m0236",
+        "children": [
+          "m0238"
+        ]
+      },
+      "m0238": {
+        "id": "m0238",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "她把手套摘下来，指尖有点红。“周末我调班。”"
+            ]
+          },
+          "create_time": 1782978600
+        },
+        "parent": "m0237",
+        "children": [
+          "m0239"
+        ]
+      },
+      "m0239": {
+        "id": "m0239",
+        "message": {
+          "author": {
+            "role": "user"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（第30天）你要是累了，就靠一会儿。"
+            ]
+          },
+          "create_time": 1782978900
+        },
+        "parent": "m0238",
+        "children": [
+          "m0240",
+          "m0241b"
+        ]
+      },
+      "m0240": {
+        "id": "m0240",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "他低声说了句什么，被雨声盖住了。“就一会儿。”"
+            ]
+          },
+          "create_time": 1782979200
+        },
+        "parent": "m0239",
+        "children": []
+      },
+      "m0241b": {
+        "id": "m0241b",
+        "message": {
+          "author": {
+            "role": "assistant"
+          },
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "（另一版）他没有回答，只把窗帘拉开一条缝。\n\n“等这场雨停了，我陪你去。”"
+            ]
+          },
+          "create_time": 1782979800
+        },
+        "parent": "m0239",
+        "children": []
+      }
+    }
+  }
+}
