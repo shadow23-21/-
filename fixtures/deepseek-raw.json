@@ -1,0 +1,126 @@
+{
+  "code": 0,
+  "msg": "",
+  "data": {
+    "biz_code": 0,
+    "biz_msg": "",
+    "biz_data": {
+      "chat_session": {
+        "id": "raw-demo-001",
+        "seq_id": 1001,
+        "agent": "chat",
+        "title": "和沈砚的雨夜",
+        "title_type": "USER",
+        "version": 3,
+        "current_message_id": 6,
+        "pinned": false,
+        "inserted_at": 1763826000.1,
+        "updated_at": 1763826400.1
+      },
+      "chat_messages": [
+        {
+          "message_id": 1,
+          "parent_id": null,
+          "model": "",
+          "role": "USER",
+          "thinking_enabled": false,
+          "inserted_at": 1763826001.1,
+          "fragments": [
+            {
+              "id": 1,
+              "type": "REQUEST",
+              "content": "（第1天）外面下雨了，你带伞没有？"
+            }
+          ]
+        },
+        {
+          "message_id": 2,
+          "parent_id": 1,
+          "model": "",
+          "role": "ASSISTANT",
+          "thinking_enabled": true,
+          "inserted_at": 1763826002.2,
+          "fragments": [
+            {
+              "id": 1,
+              "type": "THINK",
+              "content": "她是在担心我。先别急着说带了，逗她一句。"
+            },
+            {
+              "id": 2,
+              "type": "RESPONSE",
+              "content": "他把伞从柜子里抽出来，伞骨上还挂着上次的雨珠。\n\n“带了。在柜子里。”"
+            }
+          ]
+        },
+        {
+          "message_id": 3,
+          "parent_id": 1,
+          "model": "",
+          "role": "ASSISTANT",
+          "thinking_enabled": true,
+          "inserted_at": 1763826003.3,
+          "fragments": [
+            {
+              "id": 1,
+              "type": "RESPONSE",
+              "content": "（另一版）他沉默了一会儿，把伞递给她：“你先拿着。”"
+            }
+          ]
+        },
+        {
+          "message_id": 4,
+          "parent_id": 2,
+          "model": "",
+          "role": "USER",
+          "thinking_enabled": false,
+          "inserted_at": 1763826004.4,
+          "fragments": [
+            {
+              "id": 1,
+              "type": "REQUEST",
+              "content": "（第1天）那你呢？你淋雨回去又要发烧。"
+            }
+          ]
+        },
+        {
+          "message_id": 5,
+          "parent_id": 4,
+          "model": "",
+          "role": "ASSISTANT",
+          "thinking_enabled": true,
+          "inserted_at": 1763826005.5,
+          "fragments": [
+            {
+              "id": 1,
+              "type": "RESPONSE",
+              "content": "（另一版）他把外套脱下来罩在她头上，自己走进雨里。"
+            }
+          ]
+        },
+        {
+          "message_id": 6,
+          "parent_id": 4,
+          "model": "",
+          "role": "ASSISTANT",
+          "thinking_enabled": true,
+          "inserted_at": 1763826006.6,
+          "fragments": [
+            {
+              "id": 1,
+              "type": "THINK",
+              "content": "她真的会生气。别逞强，先把伞给她。"
+            },
+            {
+              "id": 2,
+              "type": "RESPONSE",
+              "content": "他看了她一眼，把伞往她那边偏了偏。\n\n“我送你到楼下。就一段路。”"
+            }
+          ]
+        }
+      ],
+      "cache_valid": false,
+      "route_id": null
+    }
+  }
+}

@@ -2,17 +2,51 @@
 
 ## 优先级
 
-1. DeepSeek 官方导出（主路径）
+1. **DeepSeek RAW / 官方导出**（真实 schema，已验证）
 2. DeepSeek tree JSON（ceyaima 导出器）
 3. ChatGPT `conversations.json`
 4. SillyTavern JSONL
 5. 纯文本 / Markdown
 
-## 官方导出
+## DeepSeek RAW（官方导出）
 
-路径：DeepSeek 网页 → 设置 → 数据管理 → 导出所有历史对话。下载链接 7 天有效。
+官方导出：网页 → 设置 → 数据管理 → 导出所有历史对话 → 下载 zip；解压得到 `conversation.json` + `user.json`。
 
-官方没有公开 schema；`fixtures/deepseek-official.json` 是按“账号 + conversations + messages”假设的合成样本，**必须用一份真实脱敏导出替换/校验**。
+`conversation.json` 里的会话是 DeepSeek 内部 RAW 形状：
+
+```json
+{
+  "data": {
+    "biz_data": {
+      "chat_session": {
+        "id": "...",
+        "title": "...",
+        "current_message_id": 11,
+        "inserted_at": 1763826110.639
+      },
+      "chat_messages": [
+        {
+          "message_id": 1,
+          "parent_id": null,
+          "role": "USER",
+          "inserted_at": 1763826114.569,
+          "fragments": [
+            { "type": "REQUEST", "content": "..." }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+要点：
+
+- `fragments[].type`：`REQUEST`（用户输入）、`RESPONSE`（助手正文）、`THINK`（思考）。导入时 `THINK` 存 `thinking`，不混进正文。
+- `parent_id` 还原分支；`chat_session.current_message_id` 指向当前选中的叶子，沿 `parent_id` 走到根就是主线，其他分支归档。
+- `inserted_at` 是 Unix 秒（float）。
+- 解析器同时接受：`data.biz_data` 包装、裸 `{chat_session, chat_messages}`、数组、`{conversations:[...]}`。
+- 真实样本：[ceyaima/deepseek-exporter samples](https://github.com/ceyaima/deepseek-exporter/tree/main/samples)；官方导出说明：[博客](https://www.cnblogs.com/windin/p/20106238)。
 
 ## 归一化事件
 
@@ -26,10 +60,13 @@ export interface Event {
   role: Role;
   speaker?: string;
   text: string;
+  thinking?: string;
   createdAt: string; // ISO 8601
   branchId?: string;
   selected?: boolean;
-  source: 'deepseek-official' | 'deepseek-tree' | 'chatgpt' | 'sillytavern' | 'plaintext';
+  source: 'deepseek-raw' | 'deepseek-official' | 'deepseek-tree' | 'chatgpt' | 'sillytavern' | 'plaintext';
+  model?: string;
+  title?: string;
 }
 ```
 

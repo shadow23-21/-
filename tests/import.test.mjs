@@ -54,6 +54,42 @@ test('detects every fixture format', () => {
     detectFormat(JSON.stringify(loadJson('deepseek-official.json'))),
     'deepseek-official',
   );
+  assert.equal(detectFormat(loadJson('deepseek-raw.json')), 'deepseek-raw');
+});
+
+test('deepseek raw follows current_message_id and extracts thinking', () => {
+  const result = importChat(loadJson('deepseek-raw.json'));
+  assert.equal(result.format, 'deepseek-raw');
+  assert.equal(result.events.length, 6);
+  assert.equal(result.selected.length, 4);
+  assert.deepEqual(result.selected.map((event) => event.id), ['1', '2', '4', '6']);
+
+  assert.equal(result.events.find((event) => event.id === '3').selected, false);
+  assert.equal(result.events.find((event) => event.id === '5').selected, false);
+
+  const message2 = result.events.find((event) => event.id === '2');
+  assert.match(message2.thinking, /担心/);
+  assert.match(message2.text, /带了/);
+
+  for (let index = 1; index < result.selected.length; index += 1) {
+    assert.equal(result.selected[index].parentId, result.selected[index - 1].id);
+  }
+});
+
+test('deepseek raw unwraps data.biz_data, arrays and conversations', () => {
+  const raw = loadJson('deepseek-raw.json');
+  const inputs = [
+    raw.data.biz_data,
+    { data: raw.data },
+    [raw.data.biz_data],
+    { conversations: [raw.data.biz_data] },
+  ];
+
+  for (const input of inputs) {
+    const result = importChat(input);
+    assert.equal(result.format, 'deepseek-raw');
+    assert.equal(result.selected.length, 4);
+  }
 });
 
 for (const item of cases) {

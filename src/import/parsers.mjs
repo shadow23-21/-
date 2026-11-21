@@ -204,6 +204,175 @@ export function parseSillyTavern(input) {
   });
 }
 
+function fragmentsToText(fragments, role) {
+  const preferred = role === 'user' ? 'REQUEST' : 'RESPONSE';
+  const picked = fragments.filter((fragment) => fragment && fragment.type === preferred);
+  const fallback = fragments.filter((fragment) => fragment && fragment.type !== 'THINK');
+  return (picked.length > 0 ? picked : fallback)
+    .map((fragment) => String(fragment.content ?? ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function fragmentsToThinking(fragments) {
+  return fragments
+    .filter((fragment) => fragment && fragment.type === 'THINK')
+    .map((fragment) => String(fragment.content ?? ''))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function longestPath(rootId, byId, children) {
+  let best = [];
+  const stack = [[rootId, [rootId]]];
+  while (stack.length > 0) {
+    const [id, path] = stack.pop();
+    if (path.length > best.length) best = path;
+    for (const childId of children.get(id) ?? []) {
+      if (!path.includes(childId)) {
+        stack.push([childId, [...path, childId]]);
+      }
+    }
+  }
+  return best;
+}
+
+function collectRawSessions(value, out = [], seen = new Set(), depth = 0) {
+  if (!value || typeof value !== 'object' || depth > 8) return out;
+
+  if (Array.isArray(value)) {
+    for (const item of value) collectRawSessions(item, out, seen, depth + 1);
+    return out;
+  }
+
+  if (value.data && typeof value.data === 'object') {
+    collectRawSessions(value.data, out, seen, depth + 1);
+    return out;
+  }
+
+  if (value.biz_data && typeof value.biz_data === 'object') {
+    collectRawSessions(value.biz_data, out, seen, depth + 1);
+    return out;
+  }
+
+  if (value.chat_session && Array.isArray(value.chat_messages)) {
+    if (!seen.has(value)) {
+      seen.add(value);
+      out.push(value);
+    }
+    return out;
+  }
+
+  if (Array.isArray(value.conversations)) {
+    for (const item of value.conversations) {
+      collectRawSessions(item, out, seen, depth + 1);
+    }
+    return out;
+  }
+
+  for (const item of Object.values(value)) {
+    if (item && typeof item === 'object') collectRawSessions(item, out, seen, depth + 1);
+  }
+  return out;
+}
+
+/**
+ * Parse DeepSeek's RAW conversation shape:
+ * { data: { biz_data: { chat_session, chat_messages } } }
+ * or an array/map of the same shape (official export conversation.json).
+ */
+export function parseDeepSeekRaw(input) {
+  const sessions = collectRawSessions(input);
+  const events = [];
+
+  for (const session of sessions) {
+    const info = session.chat_session ?? {};
+    const conversationId = String(info.id ?? `deepseek-raw-${events.length}`);
+    const messages = Array.isArray(session.chat_messages) ? session.chat_messages : [];
+    const byId = new Map(
+      messages.map((message) => [String(message.message_id), message]),
+    );
+    const children = new Map();
+
+    for (const message of messages) {
+      const parentId =
+        message.parent_id === null || message.parent_id === undefined
+          ? null
+          : String(message.parent_id);
+      if (parentId && byId.has(parentId)) {
+        if (!children.has(parentId)) children.set(parentId, []);
+        children.get(parentId).push(String(message.message_id));
+      }
+    }
+
+    const roots = messages.filter((message) => {
+      const parentId =
+        message.parent_id === null || message.parent_id === undefined
+          ? null
+          : String(message.parent_id);
+      return !parentId || !byId.has(parentId);
+    });
+
+    const selected = new Set();
+    const currentId =
+      info.current_message_id !== null && info.current_message_id !== undefined
+        ? String(info.current_message_id)
+        : null;
+
+    let currentRootId = null;
+    if (currentId && byId.has(currentId)) {
+      let cursor = currentId;
+      const path = [];
+      const seen = new Set();
+      while (cursor && byId.has(cursor) && !seen.has(cursor)) {
+        seen.add(cursor);
+        path.push(cursor);
+        const node = byId.get(cursor);
+        cursor =
+          node.parent_id === null || node.parent_id === undefined
+            ? null
+            : String(node.parent_id);
+      }
+      for (const id of path) selected.add(id);
+      currentRootId = path[path.length - 1];
+    }
+
+    for (const root of roots) {
+      const rootId = String(root.message_id);
+      if (rootId === currentRootId) continue;
+      for (const id of longestPath(rootId, byId, children)) selected.add(id);
+    }
+
+    for (const message of messages) {
+      const id = String(message.message_id);
+      const role = normalizeRole(message.role);
+      const fragments = Array.isArray(message.fragments) ? message.fragments : [];
+      const text = fragmentsToText(fragments, role);
+      const thinking = fragmentsToThinking(fragments);
+
+      events.push({
+        id,
+        conversationId,
+        parentId:
+          message.parent_id === null || message.parent_id === undefined
+            ? undefined
+            : String(message.parent_id),
+        role,
+        speaker: message.speaker ?? message.name ?? undefined,
+        text,
+        thinking: thinking || undefined,
+        createdAt: toIso(message.inserted_at ?? message.created_at, events.length),
+        selected: selected.has(id),
+        source: 'deepseek-raw',
+        model: message.model || undefined,
+        title: info.title ?? undefined,
+      });
+    }
+  }
+
+  return events;
+}
+
 export function parsePlainText(text, options = {}) {
   const userNames = new Set(
     options.userNames ?? ['我', '林晚', '用户', 'User', 'user'],

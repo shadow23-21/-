@@ -6,7 +6,8 @@
   "description": "Mobile-first, local-first memory app for long-form Chinese roleplay",
   "scripts": {
     "test": "node --test",
-    "fixtures": "node scripts/make-fixtures.mjs"
+    "fixtures": "node scripts/make-fixtures.mjs",
+    "demo": "node scripts/import-demo.mjs"
   },
   "engines": {
     "node": ">=22"

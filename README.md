@@ -12,11 +12,12 @@
 - 一人一库、多角色按 `character_id` 隔离，不串人
 - 手机端：React + Vite + Capacitor；先 Web/PWA，再 Android
 
-## 当前状态（Day 0）
+## 当前状态
 
 - [x] 仓库骨架
-- [x] 5 份合成导入 fixture（覆盖官方/树/ChatGPT/SillyTavern/纯文本）
-- [ ] DeepSeek 官方导出真实样本 → 解析器
+- [x] 6 份导入 fixture（覆盖 DeepSeek RAW/官方假设/树/ChatGPT/SillyTavern/纯文本）
+- [x] DeepSeek 官方导出真实 schema 已用公开 RAW 样本验证（11 条消息，8 条选中，3 条分支归档）
+- [x] 导入 CLI：`node scripts/import-demo.mjs <file>`
 - [ ] SQLite schema + story bible
 - [ ] PWA 聊天 + BYOK
 - [ ] Android 包

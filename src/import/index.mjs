@@ -2,6 +2,7 @@ import { detectFormat } from './detect.mjs';
 import {
   parseChatGPT,
   parseDeepSeekOfficial,
+  parseDeepSeekRaw,
   parseDeepSeekTree,
   parsePlainText,
   parseSillyTavern,
@@ -19,6 +20,9 @@ export function importChat(input, options = {}) {
   let events;
 
   switch (format) {
+    case 'deepseek-raw':
+      events = parseDeepSeekRaw(input);
+      break;
     case 'deepseek-official':
       events = parseDeepSeekOfficial(input);
       break;
