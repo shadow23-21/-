@@ -31,6 +31,7 @@ const DEFAULT_SETTINGS = {
   apiKey: '',
   useServerKey: true,
   directDeepseek: DEFAULT_DIRECT_DEEPSEEK,
+  managed: false,
   remember: false,
   maxRecent: 6,
   retrievalLimit: 4,
@@ -63,7 +64,12 @@ const loadSettings = () => {
   try {
     const stored = JSON.parse(localStorage.getItem('whale-settings') || '{}');
     const merged = { ...DEFAULT_SETTINGS, ...stored };
-    if (merged.directDeepseek) merged.useServerKey = false;
+    if (merged.managed) {
+      merged.directDeepseek = false;
+      merged.useServerKey = false;
+    } else if (merged.directDeepseek) {
+      merged.useServerKey = false;
+    }
     return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -116,6 +122,11 @@ export default function App() {
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState('');
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [accountToken, setAccountToken] = useState(
+    () => localStorage.getItem('whale-account-token') || '',
+  );
+  const [credits, setCredits] = useState(null);
+  const [redeemInput, setRedeemInput] = useState('');
 
   const abortRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -129,8 +140,11 @@ export default function App() {
         (settings.provider === 'zhipu' ? 'glm-4.7-flash' : 'deepseek-flash'),
       apiKey: settings.apiKey || '',
       useServerKey: settings.useServerKey !== false,
+      managed: settings.managed === true,
       directDeepseek:
-        settings.directDeepseek === true && (settings.provider || 'deepseek') === 'deepseek',
+        settings.managed !== true &&
+        settings.directDeepseek === true &&
+        (settings.provider || 'deepseek') === 'deepseek',
     }),
     [settings],
   );
@@ -228,6 +242,25 @@ export default function App() {
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
+
+  useEffect(() => {
+    if (!accountToken || !API_BASE) {
+      setCredits(null);
+      return undefined;
+    }
+    let cancelled = false;
+    fetch(`${API_BASE}/api/balance`, {
+      headers: { Authorization: `Bearer ${accountToken}` },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!cancelled && payload) setCredits(payload.credits);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [accountToken]);
 
   useEffect(() => {
     if (!data || !library.activeId) return;
@@ -458,6 +491,14 @@ export default function App() {
     setImportStatus('角色名已更新');
   };
 
+  const persistSettings = (next) => {
+    setSettings(next);
+    setDraftSettings(next);
+    const persisted = { ...next };
+    if (!next.remember) delete persisted.apiKey;
+    localStorage.setItem('whale-settings', JSON.stringify(persisted));
+  };
+
   const saveSettingsForm = () => {
     const next = {
       ...DEFAULT_SETTINGS,
@@ -468,12 +509,64 @@ export default function App() {
       maxOutputTokens: Number(draftSettings.maxOutputTokens) || 500,
       temperature: Number(draftSettings.temperature) || 0.9,
     };
-    setSettings(next);
-    const persisted = { ...next };
-    if (!next.remember) delete persisted.apiKey;
-    localStorage.setItem('whale-settings', JSON.stringify(persisted));
+    persistSettings(next);
     setError('');
     setView('chat');
+  };
+
+  const refreshBalance = async () => {
+    if (!accountToken || !API_BASE) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/balance`, {
+        headers: { Authorization: `Bearer ${accountToken}` },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      setCredits(payload.credits);
+    } catch (balanceError) {
+      setError(`余额读取失败：${balanceError.message}`);
+    }
+  };
+
+  const redeemAccount = async () => {
+    const code = redeemInput.trim();
+    if (!code) return;
+    if (!API_BASE) {
+      setError('托管模式需要先配置公网 gateway');
+      return;
+    }
+    setError('');
+    try {
+      const response = await fetch(`${API_BASE}/api/redeem`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      if (!response.ok) {
+        throw new Error((await response.text()) || `HTTP ${response.status}`);
+      }
+      const payload = await response.json();
+      localStorage.setItem('whale-account-token', payload.token);
+      setAccountToken(payload.token);
+      setCredits(payload.credits);
+      setRedeemInput('');
+      persistSettings({
+        ...settings,
+        managed: true,
+        directDeepseek: false,
+        useServerKey: false,
+      });
+      setImportStatus(`兑换成功：${payload.credits} 次`);
+    } catch (redeemError) {
+      setError(`兑换失败：${redeemError.message}`);
+    }
+  };
+
+  const clearAccount = () => {
+    localStorage.removeItem('whale-account-token');
+    setAccountToken('');
+    setCredits(null);
+    persistSettings({ ...settings, managed: false });
   };
 
   const openSettings = () => {
@@ -624,39 +717,56 @@ export default function App() {
     abortRef.current = controller;
 
     try {
-      if (config.directDeepseek && !config.apiKey) {
-        throw new Error('直连模式需要先填 DeepSeek API key');
-      }
-      if (!config.directDeepseek && !API_BASE) {
-        throw new Error('没有配置 gateway，请开启 DeepSeek 直连或设置 VITE_API_BASE');
-      }
+      let url;
+      let headers;
+      let body;
 
-      const url = config.directDeepseek
-        ? 'https://api.deepseek.com/chat/completions'
-        : `${API_BASE}/api/chat`;
-      const headers = config.directDeepseek
-        ? {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.apiKey}`,
-          }
-        : { 'Content-Type': 'application/json' };
-      const body = config.directDeepseek
-        ? {
-            model: config.model,
-            messages: ctx.messages,
-            stream: true,
-            temperature: chatOptions.temperature,
-            max_tokens: chatOptions.maxOutputTokens,
-            thinking: { type: 'disabled' },
-          }
-        : {
-            provider: config.provider,
-            model: config.model,
-            apiKey: config.useServerKey ? undefined : config.apiKey,
-            messages: ctx.messages,
-            temperature: chatOptions.temperature,
-            maxTokens: chatOptions.maxOutputTokens,
-          };
+      if (config.managed) {
+        if (!accountToken) throw new Error('托管模式需要先兑换额度');
+        if (!API_BASE) throw new Error('托管模式需要先配置公网 gateway');
+        url = `${API_BASE}/api/chat`;
+        headers = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accountToken}`,
+        };
+        body = {
+          managed: true,
+          provider: config.provider,
+          model: config.model,
+          messages: ctx.messages,
+          temperature: chatOptions.temperature,
+          maxTokens: chatOptions.maxOutputTokens,
+        };
+      } else if (config.directDeepseek) {
+        if (!config.apiKey) throw new Error('直连模式需要先填 DeepSeek API key');
+        url = 'https://api.deepseek.com/chat/completions';
+        headers = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${config.apiKey}`,
+        };
+        body = {
+          model: config.model,
+          messages: ctx.messages,
+          stream: true,
+          temperature: chatOptions.temperature,
+          max_tokens: chatOptions.maxOutputTokens,
+          thinking: { type: 'disabled' },
+        };
+      } else {
+        if (!API_BASE) {
+          throw new Error('没有配置 gateway，请开启 DeepSeek 直连或设置 VITE_API_BASE');
+        }
+        url = `${API_BASE}/api/chat`;
+        headers = { 'Content-Type': 'application/json' };
+        body = {
+          provider: config.provider,
+          model: config.model,
+          apiKey: config.useServerKey ? undefined : config.apiKey,
+          messages: ctx.messages,
+          temperature: chatOptions.temperature,
+          maxTokens: chatOptions.maxOutputTokens,
+        };
+      }
 
       const response = await fetch(url, {
         method: 'POST',
@@ -759,6 +869,7 @@ export default function App() {
       await saveLibrary(next).catch(() => {});
       setStreaming(false);
       abortRef.current = null;
+      if (config.managed) refreshBalance();
     }
   };
 
@@ -976,6 +1087,7 @@ export default function App() {
               />
               <div className="composer-row">
                 <span className="hint">
+                  {config.managed && `额度 ${credits ?? '—'} 次 · `}
                   {context
                     ? `≈ ${context.estimatedInputTokens} tokens · ¥${context.estimatedCostCNY.toFixed(3)} · 预算 ${context.budgetUsedPct}%`
                     : `${config.provider} / ${config.model}`}
@@ -1172,6 +1284,13 @@ export default function App() {
         <SettingsPage
           draftSettings={draftSettings}
           setDraftSettings={setDraftSettings}
+          accountToken={accountToken}
+          credits={credits}
+          redeemInput={redeemInput}
+          setRedeemInput={setRedeemInput}
+          onRedeem={redeemAccount}
+          onRefreshBalance={refreshBalance}
+          onClearAccount={clearAccount}
         />
       )}
     </div>
@@ -1452,7 +1571,17 @@ function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory
   );
 }
 
-function SettingsPage({ draftSettings, setDraftSettings }) {
+function SettingsPage({
+  draftSettings,
+  setDraftSettings,
+  accountToken,
+  credits,
+  redeemInput,
+  setRedeemInput,
+  onRedeem,
+  onRefreshBalance,
+  onClearAccount,
+}) {
   const update = (key, value) =>
     setDraftSettings((previous) => ({ ...previous, [key]: value }));
 
@@ -1528,6 +1657,64 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
             />
             记住 key（只存本机 localStorage）
           </label>
+        </section>
+
+        <section className="page-card">
+          <h3>鲸忆额度（免 API key）</h3>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={Boolean(draftSettings.managed)}
+              onChange={(event) => {
+                const managed = event.target.checked;
+                setDraftSettings((previous) => ({
+                  ...previous,
+                  managed,
+                  directDeepseek: managed ? false : previous.directDeepseek,
+                  useServerKey: managed ? false : previous.useServerKey,
+                }));
+              }}
+            />
+            使用鲸忆额度（托管模式）
+          </label>
+          <p className="page-sub">
+            托管模式需要公网 gateway；当前 API 地址：{API_BASE || '未配置（当前 release 是直连模式）'}
+          </p>
+          {accountToken ? (
+            <>
+              <p className="managed-balance">
+                剩余 <strong>{credits ?? '…'}</strong> 次
+              </p>
+              <div className="page-actions">
+                <button className="ghost" onClick={onRefreshBalance}>
+                  刷新余额
+                </button>
+                <button className="ghost" onClick={onClearAccount}>
+                  退出额度模式
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="managed-redeem">
+                <input
+                  value={redeemInput}
+                  placeholder="WHALE-XXXX-XXXX-XXXX"
+                  onChange={(event) => setRedeemInput(event.target.value)}
+                />
+                <button
+                  className="primary"
+                  onClick={onRedeem}
+                  disabled={!redeemInput.trim()}
+                >
+                  兑换
+                </button>
+              </div>
+              <p className="page-sub">
+                在爱发电 / 微店购买兑换码后填入；兑换码一次性使用，绑定当前账号 token。
+              </p>
+            </>
+          )}
         </section>
 
         <section className="page-card">

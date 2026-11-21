@@ -105,6 +105,14 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - 角色列表「导入新角色」先尝试按角色包解析；命中就直接建角色，不走 `/api/extract`。
 - 同一份包可以在另一台设备/另一个浏览器恢复，不依赖 SQLite。
 
+## 托管额度
+
+- 设置页「鲸忆额度」：输入 `WHALE-...` 兑换码，拿到 account token，显示剩余次数。
+- 托管聊天请求 `POST /api/chat`，带 `Authorization: Bearer whale_...` 和 `managed: true`；gateway 扣 1 次后用 master key 调模型。
+- `/api/redeem` 兑换、`/api/balance` 查余额；兑换码/账户/用量在 `data/billing.db`。
+- 上游失败会自动退回 1 次；流式中途断开照常扣费。
+- release APK 当前是直连 BYOK；托管版需要构建时把 `VITE_API_BASE` 指到公网 gateway，见 `docs/managed-mode.md`。
+
 ## 当前限制
 
 - zip 必须包含 `conversation.json`（官方导出解压后就是这个结构）；缺这个文件会报错。

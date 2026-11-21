@@ -12,6 +12,7 @@ web/android/local.properties
 web/android/keystore.properties
 web/android/app/release.keystore
 release/
+data/billing.db*
 web/android/app/src/main/assets/public/
 *.log
 .DS_Store

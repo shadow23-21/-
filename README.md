@@ -42,6 +42,7 @@
 - [x] DeepSeek 直连：release 填自己的 key 即可聊，无需 gateway
 - [x] 商店素材包 + 上架/合规清单（`store/`）
 - [x] 变现方案：BYOK + 托管额度，先兑换码后支付/IAP（`docs/monetization.md`）
+- [x] 托管额度：SQLite 账户/兑换码/扣费 + App 兑换/余额/免 key 聊天（`docs/managed-mode.md`）
 - [x] 手机端 ADB 输入/发送 + force-stop 重启恢复验证（242 条会话）
 
 ## 目录
@@ -110,6 +111,7 @@ node server/gateway.mjs
 - 默认省流：最近 6 轮 + 最多 4 条往事 + 6 条长期记忆 + 输出 ≤500 tokens；输入框上方显示本轮估算成本。
 - 浏览器 E2E：`cd web && node scripts/e2e.mjs`（需要 gateway 已启动 + Edge；会验证导入、聊天、记忆页、设置页）。
 - 直连 E2E：先 `VITE_DIRECT_DEEPSEEK=true VITE_API_BASE='' npm run build`，再 `node scripts/e2e-direct.mjs`（从 `http://localhost:8787` 直接调 DeepSeek，验证 CORS/流式）。
+- 托管 E2E：生成码后 `CODE=WHALE-... node web/scripts/e2e-managed.mjs`（需要本地 gateway + Edge；验证兑换/余额/免 key 聊天/扣次）。
 
 ## Android
 
@@ -132,6 +134,25 @@ APK：`web/android/app/build/outputs/apk/debug/app-debug.apk`
 adb reverse tcp:8787 tcp:8787
 adb install -r web/android/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+## 托管额度（免 API key）
+
+```powershell
+# 生成兑换码
+node scripts/codes.mjs create --credits 500 --count 10
+
+# 启动 gateway（本地）
+node server/gateway.mjs
+
+# Web 构建时指向 gateway
+cd web
+$env:VITE_DIRECT_DEEPSEEK='false'
+$env:VITE_API_BASE='http://127.0.0.1:8787'
+npm.cmd run build
+```
+
+用户：设置 → 鲸忆额度 → 输入兑换码 → 保存 → 聊天。每轮扣 1 次；上游失败自动退回。
+完整部署/卖码/限流清单见 [docs/managed-mode.md](docs/managed-mode.md)。
 
 ## 签名发布（可直接发给别人）
 

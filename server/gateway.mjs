@@ -4,11 +4,20 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { extractStoryBible } from '../src/memory/extract.mjs';
+import {
+  consumeCredit,
+  getAccount,
+  openBilling,
+  redeemCode,
+  refundCredit,
+} from './billing.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'web', 'dist');
-const HOST = '127.0.0.1';
+const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 8787);
+const BILLING_DB = process.env.BILLING_DB || path.join(ROOT, 'data', 'billing.db');
+const billing = openBilling(BILLING_DB);
 
 const MIME = new Map([
   ['.html', 'text/html; charset=utf-8'],
@@ -46,6 +55,11 @@ function sendJson(response, status, payload) {
     'Access-Control-Allow-Origin': '*',
   });
   response.end(body);
+}
+
+function bearerToken(request) {
+  const header = request.headers.authorization ?? '';
+  return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
 }
 
 async function readBody(request) {
@@ -119,6 +133,33 @@ async function handleExtract(request, response) {
   }
 }
 
+async function handleRedeem(request, response) {
+  let payload;
+  try {
+    payload = JSON.parse(await readBody(request));
+  } catch (error) {
+    sendJson(response, 400, { error: `Invalid JSON: ${error.message}` });
+    return;
+  }
+
+  const result = redeemCode(billing, payload.code);
+  if (!result) {
+    sendJson(response, 400, { error: '兑换码无效或已使用' });
+    return;
+  }
+  sendJson(response, 200, result);
+}
+
+function handleBalance(request, response) {
+  const token = bearerToken(request);
+  const account = getAccount(billing, token);
+  if (!account) {
+    sendJson(response, 401, { error: '账号 token 无效，请重新兑换' });
+    return;
+  }
+  sendJson(response, 200, { credits: account.credits });
+}
+
 async function handleChat(request, response) {
   let payload;
   try {
@@ -128,15 +169,42 @@ async function handleChat(request, response) {
     return;
   }
 
+  const managed = payload.managed === true;
+  let account = null;
+  if (managed) {
+    const token = bearerToken(request) || payload.accountToken;
+    account = getAccount(billing, token);
+    if (!account) {
+      sendJson(response, 401, { error: '账号 token 无效，请重新兑换' });
+      return;
+    }
+    if (account.credits < 1) {
+      sendJson(response, 402, { error: '额度不足，请先兑换', credits: 0 });
+      return;
+    }
+  }
+
   const provider = payload.provider === 'zhipu' ? 'zhipu' : 'deepseek';
-  const apiKey =
-    payload.apiKey ||
-    (provider === 'zhipu' ? env.ZHIPU_API_KEY : env.DEEPSEEK_API_KEY);
+  const apiKey = managed
+    ? provider === 'zhipu'
+      ? env.ZHIPU_API_KEY
+      : env.DEEPSEEK_API_KEY
+    : payload.apiKey ||
+      (provider === 'zhipu' ? env.ZHIPU_API_KEY : env.DEEPSEEK_API_KEY);
   if (!apiKey) {
-    sendJson(response, 400, {
+    sendJson(response, managed ? 500 : 400, {
       error: `Missing API key for ${provider}. Put it in .env or the settings panel.`,
     });
     return;
+  }
+
+  let reserved = false;
+  if (managed) {
+    if (!consumeCredit(billing, account.id, 1)) {
+      sendJson(response, 402, { error: '额度不足，请先兑换', credits: 0 });
+      return;
+    }
+    reserved = true;
   }
 
   const model =
@@ -169,12 +237,14 @@ async function handleChat(request, response) {
       body: JSON.stringify(upstreamBody),
     });
   } catch (error) {
+    if (reserved) refundCredit(billing, account.id, 1);
     sendJson(response, 502, { error: `Upstream fetch failed: ${error.message}` });
     return;
   }
 
   if (!upstream.ok) {
     const detail = await upstream.text();
+    if (reserved) refundCredit(billing, account.id, 1);
     sendJson(response, upstream.status, { error: detail.slice(0, 1000) });
     return;
   }
@@ -213,7 +283,7 @@ const server = http.createServer(async (request, response) => {
     response.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
     });
     response.end();
@@ -225,7 +295,26 @@ const server = http.createServer(async (request, response) => {
       ok: true,
       dist: fs.existsSync(DIST),
       provider: env.DEEPSEEK_API_KEY ? 'deepseek' : null,
+      billing: fs.existsSync(BILLING_DB),
     });
+    return;
+  }
+
+  if (url.pathname === '/api/redeem') {
+    if (request.method !== 'POST') {
+      sendJson(response, 405, { error: 'POST required' });
+      return;
+    }
+    await handleRedeem(request, response);
+    return;
+  }
+
+  if (url.pathname === '/api/balance') {
+    if (request.method !== 'GET') {
+      sendJson(response, 405, { error: 'GET required' });
+      return;
+    }
+    handleBalance(request, response);
     return;
   }
 

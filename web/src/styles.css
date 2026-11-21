@@ -501,6 +501,39 @@ select {
   margin-top: 0;
 }
 
+.managed-redeem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.managed-redeem input {
+  min-width: 220px;
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0d1528;
+  color: var(--text);
+  outline: none;
+}
+
+.managed-redeem input:focus {
+  border-color: var(--accent);
+}
+
+.managed-balance {
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.managed-balance strong {
+  color: var(--accent);
+  font-size: 24px;
+}
+
 .character-toolbar {
   display: flex;
   max-width: 620px;
