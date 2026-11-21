@@ -40,6 +40,7 @@ function sendJson(response, status, payload) {
   response.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(body),
+    'Access-Control-Allow-Origin': '*',
   });
   response.end(body);
 }
@@ -151,6 +152,7 @@ async function handleChat(request, response) {
     'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
+    'Access-Control-Allow-Origin': '*',
   });
   response.flushHeaders?.();
 
@@ -174,6 +176,17 @@ async function handleChat(request, response) {
 
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host ?? 'localhost'}`);
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
+    });
+    response.end();
+    return;
+  }
 
   if (url.pathname === '/api/health') {
     sendJson(response, 200, {

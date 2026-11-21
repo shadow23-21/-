@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildContext } from './lib/context.js';
 
+// Empty for the local gateway; set VITE_API_BASE for the Android WebView
+// (e.g. http://127.0.0.1:8787 with `adb reverse tcp:8787 tcp:8787`).
+const API_BASE = import.meta.env.VITE_API_BASE || '';
+
 const uid = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
@@ -139,7 +143,7 @@ export default function App() {
     abortRef.current = controller;
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,

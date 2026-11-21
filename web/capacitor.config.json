@@ -1,0 +1,9 @@
+﻿{
+  "appId": "com.whalememory.app",
+  "appName": "whale-memory",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}

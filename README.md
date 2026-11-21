@@ -22,7 +22,8 @@
 - [x] story bible 抽取（GLM-4.7-Flash，关闭思考；失败可降级确定性摘要）
 - [x] 本地 HTML demo（`index.html`，可直接打开）
 - [x] PWA 聊天 + BYOK + 检索上下文（本地 gateway，流式输出）
-- [ ] Android 包
+- [x] Android 工程 + debug APK 构建通过（`web/android`）
+- [ ] 手机安装验证（Redmi 需要先开 USB 安装权限）
 
 ## 目录
 
@@ -77,6 +78,32 @@ node server/gateway.mjs
 - 请求统一带 `thinking: { type: "disabled" }`：DeepSeek V4 和 GLM 默认思考，不关会只出 reasoning、正文为空。
 - 上下文 = 人设 + story bible + 检索到的往事 + 最近 8 轮；页面会显示估算 tokens / 成本。
 - 设置面板可切 DeepSeek / 智谱、改模型、填 key；key 只在本机 localStorage（勾选“记住”时）。
+
+## Android
+
+```bash
+cd web
+# Android WebView 通过 adb reverse 访问电脑上的 gateway
+$env:VITE_API_BASE='http://127.0.0.1:8787'
+npm.cmd run build
+npx.cmd cap sync android
+
+cd android
+$env:JAVA_HOME='C:\dev\jdk21'
+$env:ANDROID_HOME='C:\dev\android-sdk'
+.\gradlew.bat assembleDebug
+```
+
+APK：`web/android/app/build/outputs/apk/debug/app-debug.apk`
+
+```bash
+adb reverse tcp:8787 tcp:8787
+adb install -r web/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+- Redmi/Xiaomi 如果报 `INSTALL_FAILED_USER_RESTRICTED`：开发者选项里打开 **USB 安装**、**USB 调试（安全设置）**，再重试。
+- `androidScheme: http` + `cleartext: true` 只为本地调试；正式版换 HTTPS。
+- 手机 `127.0.0.1:8787` 由 `adb reverse` 映射到电脑 gateway。
 
 ## 计划技术栈
 

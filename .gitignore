@@ -6,6 +6,10 @@ out/
 .env.*
 !.env.example
 fixtures/private/
+web/android/.gradle/
+web/android/.idea/
+web/android/local.properties
+web/android/app/src/main/assets/public/
 *.log
 .DS_Store
 Thumbs.db
