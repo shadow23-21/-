@@ -122,6 +122,30 @@ test('buildContext respects the cheap defaults and custom budgets', () => {
   assert.equal(context.options.maxRecent, 2);
 });
 
+test('buildContext respects a tight token budget', () => {
+  const largeBible = {
+    ...bible,
+    memories: Array.from({ length: 10 }, (_, index) => ({
+      kind: '事件',
+      text: `第 ${index} 条很长的记忆：${'雨夜和伞。'.repeat(8)}`,
+      importance: 0.5 + index / 20,
+    })),
+  };
+
+  const context = buildContext({
+    bible: largeBible,
+    events,
+    messages: [{ role: 'assistant', text: '走廊尽头的灯闪了一下。' }],
+    userText: '周末还去看海吗？',
+    contextBudgetTokens: 260,
+  });
+  assert.equal(context.options.contextBudgetTokens, 260);
+  assert.ok(context.estimatedInputTokens > 0);
+  assert.ok(context.budgetUsedPct <= 100);
+  assert.ok(context.memories.length < 10);
+  assert.ok(context.retrieved.length < events.length);
+});
+
 test('cost estimate is positive', () => {
   assert.ok(estimateCostCNY(10_000) > 0);
 });

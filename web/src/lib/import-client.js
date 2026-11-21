@@ -2,6 +2,7 @@ import { unzipSync } from 'fflate';
 
 import { importChat } from '../../../src/import/index.mjs';
 
+import { parseCharacterPack } from './character-pack.js';
 import { API_BASE } from './config.js';
 
 async function readInput(file) {
@@ -30,6 +31,13 @@ async function readInput(file) {
 
 export async function parseImportFile(file) {
   return importChat(await readInput(file));
+}
+
+export async function readCharacterPack(file) {
+  const name = String(file.name ?? '').toLowerCase();
+  if (name.endsWith('.zip')) return null;
+  const text = await file.text();
+  return parseCharacterPack(text);
 }
 
 export async function requestStoryBible(events, title) {

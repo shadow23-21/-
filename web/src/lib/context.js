@@ -125,6 +125,18 @@ export function estimateCostCNY(inputTokens, outputTokens = 300) {
   );
 }
 
+function fitByChars(items, maxChars, lengthOf) {
+  const selected = [];
+  let chars = 0;
+  for (const item of items) {
+    const length = lengthOf(item);
+    if (selected.length > 0 && chars + length > maxChars) break;
+    selected.push(item);
+    chars += length;
+  }
+  return selected;
+}
+
 export function buildContext({
   bible,
   events,
@@ -133,6 +145,7 @@ export function buildContext({
   maxRecent = 8,
   retrievalLimit = 6,
   memoryLimit = 8,
+  contextBudgetTokens = 1500,
   estimatedOutputTokens = 300,
 }) {
   const persona = bible.persona;
@@ -170,11 +183,41 @@ export function buildContext({
     ...(bible.open_threads ?? []).map((thread) => `- ${thread}`),
   ].join('\n');
 
-  const memories = memoryLines(bible, userText, memoryLimit);
-  const retrieved = retrieve(events, userText, {
-    excludeLast: maxRecent,
-    limit: retrievalLimit,
-  });
+  const budgetChars = Math.max(0, Math.round(contextBudgetTokens * 2.2));
+  const recent = messages.slice(-maxRecent).map((message) => ({
+    role: message.role === 'user' ? 'user' : 'assistant',
+    content: String(message.text ?? ''),
+  }));
+
+  let recentChars = recent.reduce((sum, message) => sum + message.content.length, 0);
+  while (
+    recent.length > 1 &&
+    stable.length + recentChars + userText.length > budgetChars
+  ) {
+    recent.shift();
+    recentChars = recent.reduce((sum, message) => sum + message.content.length, 0);
+  }
+
+  const remainingChars = Math.max(
+    0,
+    budgetChars - stable.length - recentChars - userText.length,
+  );
+  const memoryBudgetChars = Math.floor(remainingChars * 0.45);
+  const retrievalBudgetChars = remainingChars - memoryBudgetChars;
+
+  const memories = fitByChars(
+    memoryLines(bible, userText, memoryLimit),
+    memoryBudgetChars,
+    (memory) => `- [${memory.kind}] ${memory.text}`.length,
+  );
+  const retrieved = fitByChars(
+    retrieve(events, userText, {
+      excludeLast: maxRecent,
+      limit: retrievalLimit,
+    }),
+    retrievalBudgetChars,
+    (event) => Math.min(220, String(event.text ?? '').length),
+  );
 
   const memoryBlock = [
     '【长期记忆】',
@@ -188,11 +231,6 @@ export function buildContext({
         )
       : ['- 无']),
   ].join('\n');
-
-  const recent = messages.slice(-maxRecent).map((message) => ({
-    role: message.role === 'user' ? 'user' : 'assistant',
-    content: String(message.text ?? ''),
-  }));
 
   const messagesForApi = [
     { role: 'system', content: stable },
@@ -213,6 +251,16 @@ export function buildContext({
     memories,
     estimatedInputTokens,
     estimatedCostCNY: estimateCostCNY(estimatedInputTokens, estimatedOutputTokens),
-    options: { maxRecent, retrievalLimit, memoryLimit, estimatedOutputTokens },
+    budgetUsedPct: Math.min(
+      100,
+      Math.round((estimatedInputTokens / Math.max(1, contextBudgetTokens)) * 100),
+    ),
+    options: {
+      maxRecent,
+      retrievalLimit,
+      memoryLimit,
+      contextBudgetTokens,
+      estimatedOutputTokens,
+    },
   };
 }

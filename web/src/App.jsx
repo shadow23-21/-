@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildContext } from './lib/context.js';
+import {
+  createCharacterPack,
+  downloadCharacterPack,
+} from './lib/character-pack.js';
 import { API_BASE } from './lib/config.js';
-import { importFile } from './lib/import-client.js';
+import { importFile, readCharacterPack } from './lib/import-client.js';
 import {
   clearLibrary,
   loadLegacySession,
@@ -30,6 +34,7 @@ const DEFAULT_SETTINGS = {
   maxRecent: 6,
   retrievalLimit: 4,
   memoryLimit: 6,
+  contextBudgetTokens: 1500,
   maxOutputTokens: 500,
   temperature: 0.9,
 };
@@ -130,6 +135,7 @@ export default function App() {
       maxRecent: Number(settings.maxRecent) || 6,
       retrievalLimit: Number(settings.retrievalLimit) || 4,
       memoryLimit: Number(settings.memoryLimit) || 6,
+      contextBudgetTokens: Number(settings.contextBudgetTokens) || 1500,
       maxOutputTokens: Number(settings.maxOutputTokens) || 500,
       temperature: Number(settings.temperature) || 0.9,
     }),
@@ -420,6 +426,22 @@ export default function App() {
     setInstallPrompt(null);
   };
 
+  const exportActive = () => {
+    if (!data) return;
+    const pack = createCharacterPack({
+      character: {
+        name: data.persona.name,
+        title: data.title,
+        source,
+        bible: data,
+        events,
+        messages,
+      },
+    });
+    downloadCharacterPack(pack, `${data.persona.name}-鲸忆角色.json`);
+    setImportStatus('角色包已导出');
+  };
+
   const renameActive = () => {
     const nextName = window.prompt('角色名', data.persona.name);
     if (!nextName || !nextName.trim()) return;
@@ -461,6 +483,29 @@ export default function App() {
     setError('');
 
     try {
+      const pack = await readCharacterPack(file).catch(() => null);
+      if (pack) {
+        const character = makeCharacter({
+          bible: pack.bible,
+          events: pack.events,
+          messages: pack.messages,
+          source: pack.source,
+        });
+        character.name = pack.name;
+        character.title = pack.title;
+        const next = {
+          ...library,
+          activeId: character.id,
+          characters: [character, ...snapshotCharacters()],
+        };
+        setLibrary(next);
+        await saveLibrary(next);
+        applyCharacter(character);
+        setImportStatus(`角色包已导入：${pack.name}`);
+        setView('chat');
+        return;
+      }
+
       const { result, bible } = await importFile(file);
       const selected = result.selected.map((event) => ({ ...event, imported: true }));
       const character = makeCharacter({
@@ -547,6 +592,7 @@ export default function App() {
       maxRecent: chatOptions.maxRecent,
       retrievalLimit: chatOptions.retrievalLimit,
       memoryLimit: chatOptions.memoryLimit,
+      contextBudgetTokens: chatOptions.contextBudgetTokens,
       estimatedOutputTokens: chatOptions.maxOutputTokens,
     });
     setContext(ctx);
@@ -779,6 +825,9 @@ export default function App() {
           )}
           {view === 'memory' && (
             <>
+              <button className="ghost" onClick={exportActive}>
+                导出
+              </button>
               <button className="ghost" onClick={renameActive}>
                 改名
               </button>
@@ -887,7 +936,7 @@ export default function App() {
               <div className="composer-row">
                 <span className="hint">
                   {context
-                    ? `≈ ${context.estimatedInputTokens} tokens · ≈ ¥${context.estimatedCostCNY.toFixed(3)}`
+                    ? `≈ ${context.estimatedInputTokens} tokens · ¥${context.estimatedCostCNY.toFixed(3)} · 预算 ${context.budgetUsedPct}%`
                     : `${config.provider} / ${config.model}`}
                 </span>
                 {streaming ? (
@@ -1354,7 +1403,8 @@ function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory
 
         <p className="page-note">
           每轮只注入：长期记忆最多 {chatOptions.memoryLimit} 条 + 相关往事最多{' '}
-          {chatOptions.retrievalLimit} 条 + 最近 {chatOptions.maxRecent} 轮。
+          {chatOptions.retrievalLimit} 条 + 最近 {chatOptions.maxRecent} 轮；总预算约{' '}
+          {chatOptions.contextBudgetTokens} tokens。
         </p>
       </div>
     </main>
@@ -1436,6 +1486,7 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
                 maxRecent: 6,
                 retrievalLimit: 4,
                 memoryLimit: 6,
+                contextBudgetTokens: 1000,
                 maxOutputTokens: 500,
               }))
             }
@@ -1471,6 +1522,19 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
                 max="20"
                 value={draftSettings.memoryLimit ?? 6}
                 onChange={(event) => update('memoryLimit', event.target.value)}
+              />
+            </label>
+            <label className="field">
+              上下文预算 tokens
+              <input
+                type="number"
+                min="300"
+                max="8000"
+                step="100"
+                value={draftSettings.contextBudgetTokens ?? 1500}
+                onChange={(event) =>
+                  update('contextBudgetTokens', event.target.value)
+                }
               />
             </label>
             <label className="field">
