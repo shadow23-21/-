@@ -1,0 +1,14 @@
+{
+  "name": "whale-memory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile-first, local-first memory app for long-form Chinese roleplay",
+  "scripts": {
+    "test": "node --test",
+    "fixtures": "node scripts/make-fixtures.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

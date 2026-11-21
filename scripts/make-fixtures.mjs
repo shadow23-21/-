@@ -188,6 +188,7 @@ for (const m of messages) {
 write('chatgpt-conversations.json', JSON.stringify({
   conv_demo_001: {
     title: '和沈砚的一百二十天',
+    current_node: last.id,
     create_time: Date.parse(messages[0].createdAt) / 1000,
     update_time: Date.parse(messages[messages.length - 1].createdAt) / 1000,
     mapping
