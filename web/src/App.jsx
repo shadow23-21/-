@@ -10,6 +10,17 @@ import {
   saveLibrary,
 } from './lib/storage.js';
 
+const INITIAL_NEW_CHARACTER = {
+  name: '',
+  title: '',
+  userName: '你',
+  stage: '初识',
+  speechStyle: '',
+  personality: '',
+  background: '',
+  opening: '',
+};
+
 const DEFAULT_SETTINGS = {
   provider: 'deepseek',
   model: 'deepseek-flash',
@@ -91,6 +102,7 @@ export default function App() {
   const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
   const [characterQuery, setCharacterQuery] = useState('');
+  const [newCharacter, setNewCharacter] = useState(INITIAL_NEW_CHARACTER);
   const [source, setSource] = useState('demo');
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState('');
@@ -276,6 +288,89 @@ export default function App() {
     setLibrary(next);
     await saveLibrary(next);
     applyCharacter(character);
+    setView('chat');
+  };
+
+  const openNewCharacter = () => {
+    setNewCharacter({ ...INITIAL_NEW_CHARACTER });
+    setError('');
+    setView('new');
+  };
+
+  const updateNewCharacter = (key, value) => {
+    setNewCharacter((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const createBlankCharacter = async () => {
+    const name = newCharacter.name.trim();
+    if (!name) {
+      setError('角色名不能为空');
+      return;
+    }
+
+    const title = newCharacter.title.trim() || `和${name}的故事`;
+    const userName = newCharacter.userName.trim() || '你';
+    const personality = newCharacter.personality
+      .split(/[，,、]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const opening = newCharacter.opening.trim();
+    const now = new Date().toISOString();
+
+    const bible = {
+      title,
+      persona: {
+        name,
+        aliases: [],
+        age: '未知',
+        appearance: '未知',
+        personality,
+        speech_style: newCharacter.speechStyle.trim() || '未知',
+        background: newCharacter.background.trim() || '未知',
+        habits: [],
+      },
+      relationship: {
+        stage: newCharacter.stage.trim() || '初识',
+        user_name: userName,
+        character_role: '',
+        address_terms: { user: [userName], character: [name] },
+        boundaries: [],
+        tensions: [],
+      },
+      timeline: [],
+      memories: [],
+      style_samples: opening ? [opening] : [],
+      open_threads: [],
+    };
+
+    const openingMessages = opening
+      ? [
+          {
+            id: uid(),
+            role: 'assistant',
+            speaker: name,
+            text: opening,
+            createdAt: now,
+          },
+        ]
+      : [];
+
+    const character = makeCharacter({
+      bible,
+      events: openingMessages,
+      messages: openingMessages,
+      source: 'created',
+    });
+    const next = {
+      ...library,
+      activeId: character.id,
+      characters: [character, ...snapshotCharacters()],
+    };
+    setLibrary(next);
+    await saveLibrary(next);
+    applyCharacter(character);
+    setNewCharacter({ ...INITIAL_NEW_CHARACTER });
+    setImportStatus('新角色已创建');
     setView('chat');
   };
 
@@ -576,7 +671,9 @@ export default function App() {
         ? '角色'
         : view === 'memory'
           ? '记忆'
-          : '设置';
+          : view === 'new'
+            ? '新建角色'
+            : '设置';
   const headerSub =
     view === 'chat'
       ? `${data.memories.length} 条长期记忆 · ${importedCount} 条导入 · ${library.characters.length} 个角色`
@@ -584,7 +681,9 @@ export default function App() {
         ? `${library.characters.length} 个角色`
         : view === 'memory'
           ? data.title
-          : '模型、省流和成本';
+          : view === 'new'
+            ? '不导入也能开始'
+            : '模型、省流和成本';
 
   return (
     <div className="app">
@@ -599,7 +698,16 @@ export default function App() {
               ☰
             </button>
           )}
-          {view !== 'chat' && view !== 'characters' && (
+          {view === 'new' && (
+            <button
+              className="icon-btn"
+              onClick={() => setView('characters')}
+              aria-label="返回角色列表"
+            >
+              ←
+            </button>
+          )}
+          {view !== 'chat' && view !== 'characters' && view !== 'new' && (
             <button className="icon-btn" onClick={() => setView('chat')} aria-label="返回">
               ←
             </button>
@@ -648,6 +756,16 @@ export default function App() {
               </button>
             </>
           )}
+          {view === 'new' && (
+            <>
+              <button className="ghost" onClick={() => setView('characters')}>
+                取消
+              </button>
+              <button className="primary" onClick={createBlankCharacter}>
+                创建
+              </button>
+            </>
+          )}
           {view === 'settings' && (
             <>
               <button className="ghost" onClick={() => setView('chat')}>
@@ -667,7 +785,7 @@ export default function App() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json,.jsonl,.txt"
+        accept=".zip,.json,.jsonl,.txt"
         hidden
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -698,6 +816,13 @@ export default function App() {
             <div className="chat-thread">
               {!showAll && messages.length > 60 && (
                 <div className="older-hint">已折叠较早的 {messages.length - 60} 条</div>
+              )}
+              {messages.length === 0 && (
+                <div className="empty-chat">
+                  <div className="avatar big">{firstChar(data.persona.name)}</div>
+                  <strong>开始和「{data.persona.name}」聊天</strong>
+                  <span>人设已经载入，直接说话就行。</span>
+                </div>
               )}
               {visibleMessages.map((message) => (
                 <Message
@@ -785,6 +910,9 @@ export default function App() {
               <p className="page-sub">没有匹配的角色。</p>
             )}
             <div className="page-actions">
+              <button className="ghost" onClick={openNewCharacter}>
+                新建角色
+              </button>
               <button
                 className="ghost"
                 onClick={() => fileInputRef.current?.click()}
@@ -794,6 +922,101 @@ export default function App() {
               </button>
               <button className="ghost" onClick={openDemoCharacter}>
                 使用 demo 角色
+              </button>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {view === 'new' && (
+        <main className="page">
+          <div className="page-inner">
+            <section className="page-card">
+              <h3>基本信息</h3>
+              <label className="field">
+                角色名 *
+                <input
+                  autoFocus
+                  value={newCharacter.name}
+                  placeholder="比如：沈砚"
+                  onChange={(event) => updateNewCharacter('name', event.target.value)}
+                />
+              </label>
+              <label className="field">
+                故事标题
+                <input
+                  value={newCharacter.title}
+                  placeholder={`默认：和${newCharacter.name || '角色'}的故事`}
+                  onChange={(event) => updateNewCharacter('title', event.target.value)}
+                />
+              </label>
+              <label className="field">
+                你的名字
+                <input
+                  value={newCharacter.userName}
+                  onChange={(event) => updateNewCharacter('userName', event.target.value)}
+                />
+              </label>
+              <label className="field">
+                关系阶段
+                <input
+                  value={newCharacter.stage}
+                  placeholder="初识 / 暧昧 / 已在一起…"
+                  onChange={(event) => updateNewCharacter('stage', event.target.value)}
+                />
+              </label>
+            </section>
+
+            <section className="page-card">
+              <h3>人设</h3>
+              <label className="field">
+                性格（逗号分隔）
+                <input
+                  value={newCharacter.personality}
+                  placeholder="克制、温柔、嘴硬"
+                  onChange={(event) =>
+                    updateNewCharacter('personality', event.target.value)
+                  }
+                />
+              </label>
+              <label className="field">
+                说话风格
+                <input
+                  value={newCharacter.speechStyle}
+                  placeholder="话少、短句、行动多于语言"
+                  onChange={(event) =>
+                    updateNewCharacter('speechStyle', event.target.value)
+                  }
+                />
+              </label>
+              <label className="field">
+                背景 / 设定
+                <textarea
+                  rows={6}
+                  value={newCharacter.background}
+                  placeholder="他是谁、你们怎么认识、有哪些不能忘的设定…"
+                  onChange={(event) =>
+                    updateNewCharacter('background', event.target.value)
+                  }
+                />
+              </label>
+              <label className="field">
+                开场白（可选）
+                <textarea
+                  rows={4}
+                  value={newCharacter.opening}
+                  placeholder="创建后他会先说的第一句话"
+                  onChange={(event) => updateNewCharacter('opening', event.target.value)}
+                />
+              </label>
+            </section>
+
+            <div className="page-actions">
+              <button className="ghost" onClick={() => setView('characters')}>
+                取消
+              </button>
+              <button className="primary" onClick={createBlankCharacter}>
+                创建角色
               </button>
             </div>
           </div>

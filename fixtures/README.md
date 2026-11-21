@@ -10,6 +10,7 @@
 | `chatgpt-conversations.json` | ChatGPT `mapping` 形状 | 跨平台导入 |
 | `sillytavern-chat.jsonl` | 一行一条消息 | 酒馆用户导入 |
 | `plain-text.md` | `角色：文本` | 复制粘贴兜底 |
+| `deepseek-export.zip` | 官方导出形状：zip 内 `conversation.json` | 验证浏览器 zip 导入 |
 
 重新生成：
 

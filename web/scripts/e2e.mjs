@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer-core';
 
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const URL = 'http://127.0.0.1:8787/';
-const fixture = path.resolve('../fixtures/deepseek-raw.json');
+const fixture = path.resolve('../fixtures/deepseek-export.zip');
 
 const browser = await puppeteer.launch({
   executablePath: EDGE,
@@ -161,6 +161,38 @@ try {
   );
   console.log('persistence:', restoredCount, restoredHasQuestion);
   await page.screenshot({ path: '../out/web-demo/restored.png' });
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '☰')
+      ?.click();
+  });
+  await page.waitForSelector('.character-card');
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '新建角色')
+      ?.click();
+  });
+  await page.waitForSelector('input[placeholder="比如：沈砚"]');
+  await page.type('input[placeholder="比如：沈砚"]', '顾青');
+  await page.type('input[placeholder="初识 / 暧昧 / 已在一起…"]', '初识');
+  await page.type(
+    'textarea[placeholder*="他是谁"]',
+    '顾青是隔壁花店的老板，笑起来很暖。',
+  );
+  await page.type('textarea[placeholder*="创建后"]', '“今天也要买花吗？”');
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '创建角色')
+      ?.click();
+  });
+  await page.waitForFunction(
+    () =>
+      document.body.innerText.includes('顾青') &&
+      document.body.innerText.includes('今天也要买花吗'),
+  );
+  await page.screenshot({ path: '../out/web-demo/created.png' });
+  console.log('create character: ok');
 } finally {
   await browser.close();
 }

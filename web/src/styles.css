@@ -239,6 +239,26 @@ select {
   font-size: 11px;
 }
 
+.empty-chat {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex-direction: column;
+  gap: 7px;
+  margin: auto 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-chat strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.empty-chat span {
+  font-size: 12px;
+}
+
 .message {
   max-width: 88%;
   padding: 9px 12px;
@@ -708,13 +728,19 @@ blockquote {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #0d1528;
   color: var(--text);
   padding: 7px 9px;
   outline: none;
+}
+
+.field textarea {
+  width: 100%;
+  resize: vertical;
 }
 
 .field input:focus,

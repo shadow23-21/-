@@ -61,11 +61,17 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 
 ## 导入
 
-- 「导入」按钮接受 `.json` / `.jsonl` / `.txt`。
+- 「导入新角色」接受 **`.zip`**（官方导出直接传，浏览器用 fflate 解压并自动找 `conversation.json`），也接受 `.json` / `.jsonl` / `.txt`。
 - 浏览器里直接调用 `src/import/index.mjs` 的 `importChat()`；支持 DeepSeek RAW、官方假设形状、tree、ChatGPT、SillyTavern、纯文本。
 - 解析后把主线消息 POST 到 `/api/extract`，生成 story bible。
 - 结果作为新角色存 IndexedDB（`whale-memory` / `session` / `library` / `characters`）；刷新自动载入。
 - 角色列表可切换角色、搜索、改名、新建 demo 角色；删除当前角色会移除它的聊天记录。
+
+## 新建角色
+
+- 角色列表「新建角色」：填角色名、故事标题、你的名字、关系阶段、性格、说话风格、背景、开场白。
+- 不导入任何记录也能直接聊；开场白会作为第一条角色消息。
+- 创建后仍是普通角色：可记住、编辑记忆、改名、删除。
 
 ## 角色与手动记忆
 
@@ -75,8 +81,8 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 
 ## 当前限制
 
-- DeepSeek 官方导出是 zip，浏览器暂不解压；先手动解压，选 `conversation.json`。
-- 多角色切换、搜索、改名已做；排序、批量管理还没做。
+- zip 必须包含 `conversation.json`（官方导出解压后就是这个结构）；缺这个文件会报错。
+- 多角色切换、搜索、改名、新建已做；排序、批量管理还没做。
 - 移动端访问需要 `adb reverse` 或 Capacitor 内嵌，暂不把 gateway 暴露到局域网。
 - 流式只渲染 `delta.content`；`reasoning_content` 已通过关闭思考避免。
 - 聊天记录已写入 IndexedDB：刷新/重启恢复导入的 story bible、主线消息和后续对话。

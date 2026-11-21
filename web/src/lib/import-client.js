@@ -1,16 +1,35 @@
+import { unzipSync } from 'fflate';
+
 import { importChat } from '../../../src/import/index.mjs';
 
 import { API_BASE } from './config.js';
 
-export async function parseImportFile(file) {
-  const text = await file.text();
-  let input;
-  try {
-    input = JSON.parse(text);
-  } catch {
-    input = text;
+async function readInput(file) {
+  const name = String(file.name ?? '').toLowerCase();
+
+  if (name.endsWith('.zip') || file.type === 'application/zip') {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const entries = unzipSync(bytes);
+    const conversationKey = Object.keys(entries).find((key) =>
+      /(^|\/)(conversation|conversations)\.json$/i.test(key),
+    );
+    if (!conversationKey) {
+      throw new Error('zip 里没有 conversation.json（官方导出解压后应有这个文件）');
+    }
+    const text = new TextDecoder().decode(entries[conversationKey]);
+    return JSON.parse(text);
   }
-  return importChat(input);
+
+  const text = await file.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+export async function parseImportFile(file) {
+  return importChat(await readInput(file));
 }
 
 export async function requestStoryBible(events, title) {

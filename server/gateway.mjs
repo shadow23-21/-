@@ -52,7 +52,7 @@ async function readBody(request) {
   let size = 0;
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > 2 * 1024 * 1024) throw new Error('Request body too large');
+    if (size > 8 * 1024 * 1024) throw new Error('Request body too large');
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString('utf8');
