@@ -41,6 +41,7 @@
 - [x] 签名 release APK + AAB（v2/v3，keystore 已生成）
 - [x] DeepSeek 直连：release 填自己的 key 即可聊，无需 gateway
 - [x] 商店素材包 + 上架/合规清单（`store/`）
+- [x] 变现方案：BYOK + 托管额度，先兑换码后支付/IAP（`docs/monetization.md`）
 - [x] 手机端 ADB 输入/发送 + force-stop 重启恢复验证（242 条会话）
 
 ## 目录
@@ -162,6 +163,13 @@ powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1
 - Chat: DeepSeek V4.1 Flash（空闲 + 缓存）
 - Extraction: GLM-4.7-Flash / qwen-flash
 - Memory: SQLite FTS5 + jieba BM25；向量二期
+
+## 变现
+
+- 方案与成本：[docs/monetization.md](docs/monetization.md)
+- 建议零售价：[store/pricing.md](store/pricing.md)
+- 结论：BYOK 免费 + 托管额度收费；先卖兑换码（爱发电/微店），有量后再接微信/支付宝/Google Play Billing/Apple IAP。
+- 不卖原始 API key；用户拿到的是应用内额度和 account token。
 
 ## 数据安全
 

@@ -13,6 +13,7 @@
 | `listing-en.md` | 英文商店文案 |
 | `privacy-policy.md` | 隐私政策模板（必须填运营者/邮箱并托管到公网 URL） |
 | `store-checklist.md` | 各商店上架步骤和合规清单 |
+| `pricing.md` | 建议零售价 / 额度套餐 |
 
 ## 最快路径
 
