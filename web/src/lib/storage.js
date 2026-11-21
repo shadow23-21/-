@@ -16,18 +16,30 @@ function openDb() {
   });
 }
 
-function withStore(mode, operation) {
+function getKey(key) {
   return openDb().then(
     (db) =>
       new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE, mode);
-        try {
-          operation(transaction.objectStore(STORE));
-        } catch (error) {
+        const transaction = db.transaction(STORE, 'readonly');
+        const request = transaction.objectStore(STORE).get(key);
+        request.onsuccess = () => {
           db.close();
-          reject(error);
-          return;
-        }
+          resolve(request.result ?? null);
+        };
+        request.onerror = () => {
+          db.close();
+          reject(request.error);
+        };
+      }),
+  );
+}
+
+function putKey(key, value) {
+  return openDb().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE, 'readwrite');
+        transaction.objectStore(STORE).put(value, key);
         transaction.oncomplete = () => {
           db.close();
           resolve();
@@ -40,30 +52,36 @@ function withStore(mode, operation) {
   );
 }
 
-export async function loadSession() {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE, 'readonly');
-    const request = transaction.objectStore(STORE).get('current');
-    request.onsuccess = () => {
-      db.close();
-      resolve(request.result ?? null);
-    };
-    request.onerror = () => {
-      db.close();
-      reject(request.error);
-    };
-  });
+function deleteKey(key) {
+  return openDb().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE, 'readwrite');
+        transaction.objectStore(STORE).delete(key);
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => {
+          db.close();
+          reject(transaction.error);
+        };
+      }),
+  );
 }
 
-export function saveSession(session) {
-  return withStore('readwrite', (store) => {
-    store.put(session, 'current');
-  });
+export function loadLibrary() {
+  return getKey('library');
 }
 
-export function clearSession() {
-  return withStore('readwrite', (store) => {
-    store.delete('current');
-  });
+export function saveLibrary(library) {
+  return putKey('library', library);
+}
+
+export function loadLegacySession() {
+  return getKey('current');
+}
+
+export function clearLibrary() {
+  return Promise.all([deleteKey('library'), deleteKey('current')]);
 }

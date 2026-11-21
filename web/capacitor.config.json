@@ -1,6 +1,6 @@
-﻿{
+{
   "appId": "com.whalememory.app",
-  "appName": "whale-memory",
+  "appName": "鲸忆",
   "webDir": "dist",
   "server": {
     "androidScheme": "http",

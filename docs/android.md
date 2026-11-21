@@ -40,7 +40,9 @@ adb shell monkey -p com.whalememory.app -c android.intent.category.LAUNCHER 1
 - Redmi/Xiaomi 报 `INSTALL_FAILED_USER_RESTRICTED` 时，就是上面后两个开关没开；部分机型还要求登录小米账号/插 SIM。
 - 当前 Redmi M332BF 已安装成功并启动；开启「USB 调试（安全设置）」后，`adb shell input tap/text` 可用。
 - 已验证：ADB 输入 `hello` → 角色回复 → `am force-stop` → 重启，恢复 242 条会话和 hello/回复。
-- 主界面是纯聊天；右上角「记忆」进入独立记忆页，「设置」进入独立设置页。
+- 主界面是纯聊天；左上角 ☰ 进角色列表，右上角「记忆」「设置」进入独立页。
+- 每个角色独立的 story bible / 消息 / 记忆；消息右上角「记住」写入长期记忆。
+- App 名「鲸忆」，图标是蓝紫渐变 + 鲸字。
 - 聊天记录写入 WebView 的 IndexedDB，杀进程/重启后恢复。
 
 ## 生产注意

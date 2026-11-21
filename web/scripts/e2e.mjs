@@ -76,6 +76,26 @@ try {
 
   await page.evaluate(() => {
     [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '☰')
+      ?.click();
+  });
+  await page.waitForSelector('.character-card');
+  const characterCount = await page.$$eval('.character-card', (nodes) => nodes.length);
+  console.log('characters:', characterCount);
+  await page.screenshot({ path: '../out/web-demo/characters.png' });
+  await page.evaluate(() => document.querySelector('.character-card')?.click());
+  await page.waitForSelector('.composer textarea');
+
+  await page.evaluate(() => {
+    const buttons = [...document.querySelectorAll('.remember-btn')];
+    buttons.at(-1)?.click();
+  });
+  await page.waitForFunction(() => document.body.innerText.includes('已加入长期记忆'));
+  await page.screenshot({ path: '../out/web-demo/remembered.png' });
+  console.log('remember: ok');
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
       .find((button) => button.textContent.trim() === '记忆')
       ?.click();
   });

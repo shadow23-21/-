@@ -3,7 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildContext } from './lib/context.js';
 import { API_BASE } from './lib/config.js';
 import { importFile } from './lib/import-client.js';
-import { clearSession, loadSession, saveSession } from './lib/storage.js';
+import {
+  clearLibrary,
+  loadLegacySession,
+  loadLibrary,
+  saveLibrary,
+} from './lib/storage.js';
 
 const DEFAULT_SETTINGS = {
   provider: 'deepseek',
@@ -46,10 +51,37 @@ const loadSettings = () => {
   }
 };
 
+function normalizeMessages(character) {
+  if (Array.isArray(character.messages) && character.messages.length > 0) {
+    return character.messages;
+  }
+  return (character.events ?? []).map((event) => ({ ...event, imported: true }));
+}
+
+function makeCharacter({ id, bible, events, messages, source }) {
+  const now = new Date().toISOString();
+  return {
+    id: id ?? `char-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: bible?.persona?.name ?? '角色',
+    title: bible?.title ?? '未命名故事',
+    source: source ?? 'imported',
+    bible,
+    events: events ?? [],
+    messages: (messages ?? []).map(({ pending, ...message }) => message),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export default function App() {
   const [data, setData] = useState(null);
   const [messages, setMessages] = useState([]);
   const [events, setEvents] = useState([]);
+  const [library, setLibrary] = useState({
+    version: 1,
+    activeId: null,
+    characters: [],
+  });
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [streaming, setStreaming] = useState(false);
@@ -80,50 +112,75 @@ export default function App() {
 
   const chatOptions = useMemo(
     () => ({
-      maxRecent: Number(settings.maxRecent) || 8,
-      retrievalLimit: Number(settings.retrievalLimit) || 6,
-      memoryLimit: Number(settings.memoryLimit) || 8,
-      maxOutputTokens: Number(settings.maxOutputTokens) || 700,
+      maxRecent: Number(settings.maxRecent) || 6,
+      retrievalLimit: Number(settings.retrievalLimit) || 4,
+      memoryLimit: Number(settings.memoryLimit) || 6,
+      maxOutputTokens: Number(settings.maxOutputTokens) || 500,
       temperature: Number(settings.temperature) || 0.9,
     }),
     [settings],
   );
+
+  const applyCharacter = (character) => {
+    setData(character.bible);
+    setEvents(character.events ?? []);
+    setMessages(normalizeMessages(character));
+    setSource(character.source ?? 'demo');
+    setImportStatus('');
+    setContext(null);
+    setDraft('');
+  };
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const session = await loadSession();
+        const stored = await loadLibrary();
         if (cancelled) return;
-        if (session?.bible && Array.isArray(session.messages) && session.messages.length > 0) {
-          setData(session.bible);
-          setEvents(Array.isArray(session.events) ? session.events : []);
-          setMessages(session.messages);
-          setSource(session.source ?? 'imported');
-          setImportStatus(`已恢复本地会话：${session.messages.length} 条`);
+
+        if (stored?.characters?.length > 0) {
+          const active =
+            stored.characters.find((character) => character.id === stored.activeId) ??
+            stored.characters[0];
+          setLibrary({ ...stored, activeId: active.id });
+          applyCharacter(active);
           return;
         }
 
-        if (session?.bible && Array.isArray(session.events) && session.events.length > 0) {
-          setData(session.bible);
-          setEvents(session.events);
-          setMessages(session.events.map((event) => ({ ...event, imported: true })));
-          setSource('imported');
-          setImportStatus(`已载入本地导入：${session.events.length} 条`);
+        const legacy = await loadLegacySession();
+        if (legacy?.bible) {
+          const character = makeCharacter({
+            bible: legacy.bible,
+            events: legacy.events ?? [],
+            messages: legacy.messages ?? [],
+            source: legacy.source ?? 'imported',
+          });
+          const next = { version: 1, activeId: character.id, characters: [character] };
+          await saveLibrary(next);
+          if (cancelled) return;
+          setLibrary(next);
+          applyCharacter(character);
           return;
         }
 
         const response = await fetch('/demo-data.json');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
+        const character = makeCharacter({
+          id: 'demo',
+          bible: payload,
+          events: payload.events,
+          messages: payload.events.map((event) => ({ ...event, imported: true })),
+          source: 'demo',
+        });
+        const next = { version: 1, activeId: character.id, characters: [character] };
+        await saveLibrary(next);
         if (cancelled) return;
-        setData(payload);
-        setEvents(payload.events);
-        setMessages(payload.events.map((event) => ({ ...event, imported: true })));
-        setSource('demo');
+        setLibrary(next);
+        applyCharacter(character);
       } catch (loadError) {
-        if (!cancelled) setError(`加载 demo 数据失败：${loadError.message}`);
+        if (!cancelled) setError(`加载角色失败：${loadError.message}`);
       }
     })();
 
@@ -138,30 +195,111 @@ export default function App() {
   }, [messages.length, messages[messages.length - 1]?.text.length, view]);
 
   useEffect(() => {
-    if (!data || messages.length === 0) return;
+    if (!data || !library.activeId) return;
     const timer = setTimeout(() => {
-      saveSession({
-        bible: data,
-        events,
-        messages: messages.map(({ pending, ...message }) => message),
-        source,
-        savedAt: new Date().toISOString(),
-      }).catch(() => {});
-    }, 700);
+      setLibrary((previous) => {
+        const characters = previous.characters.map((character) =>
+          character.id === previous.activeId
+            ? {
+                ...character,
+                name: data.persona.name,
+                title: data.title,
+                bible: data,
+                events,
+                messages: messages.map(({ pending, ...message }) => message),
+                source,
+                updatedAt: new Date().toISOString(),
+              }
+            : character,
+        );
+        const next = { ...previous, characters };
+        saveLibrary(next).catch(() => {});
+        return next;
+      });
+    }, 600);
     return () => clearTimeout(timer);
-  }, [data, events, messages, source]);
+  }, [data, events, messages, source, library.activeId]);
 
   const importedCount = messages.filter((message) => message.imported).length;
   const visibleMessages = showAll ? messages : messages.slice(-60);
+  const activeCharacter =
+    library.characters.find((character) => character.id === library.activeId) ?? null;
+
+  const snapshotCharacters = () => {
+    if (!data) return library.characters;
+    return library.characters.map((character) =>
+      character.id === library.activeId
+        ? {
+            ...character,
+            name: data.persona.name,
+            title: data.title,
+            bible: data,
+            events,
+            messages: messages.map(({ pending, ...message }) => message),
+            source,
+            updatedAt: new Date().toISOString(),
+          }
+        : character,
+    );
+  };
+
+  const switchCharacter = (id) => {
+    const characters = snapshotCharacters();
+    const character = characters.find((item) => item.id === id);
+    if (!character) return;
+    const next = { ...library, activeId: id, characters };
+    setLibrary(next);
+    saveLibrary(next).catch(() => {});
+    applyCharacter(character);
+    setView('chat');
+  };
+
+  const openDemoCharacter = async () => {
+    let character = library.characters.find((item) => item.source === 'demo');
+    if (!character) {
+      const response = await fetch('/demo-data.json');
+      const payload = await response.json();
+      character = makeCharacter({
+        id: `demo-${Date.now()}`,
+        bible: payload,
+        events: payload.events,
+        messages: payload.events.map((event) => ({ ...event, imported: true })),
+        source: 'demo',
+      });
+    }
+    const characters = [character, ...snapshotCharacters().filter((item) => item.id !== character.id)];
+    const next = { ...library, activeId: character.id, characters };
+    setLibrary(next);
+    await saveLibrary(next);
+    applyCharacter(character);
+    setView('chat');
+  };
+
+  const deleteActive = async () => {
+    if (!window.confirm('删除当前角色？它的聊天记录也会删除。')) return;
+    const remaining = library.characters.filter(
+      (character) => character.id !== library.activeId,
+    );
+    if (remaining.length === 0) {
+      await clearLibrary();
+      window.location.reload();
+      return;
+    }
+    const next = { version: 1, activeId: remaining[0].id, characters: remaining };
+    setLibrary(next);
+    await saveLibrary(next);
+    applyCharacter(remaining[0]);
+    setView('chat');
+  };
 
   const saveSettingsForm = () => {
     const next = {
       ...DEFAULT_SETTINGS,
       ...draftSettings,
-      maxRecent: Number(draftSettings.maxRecent) || 8,
+      maxRecent: Number(draftSettings.maxRecent) || 6,
       retrievalLimit: Number(draftSettings.retrievalLimit) || 0,
       memoryLimit: Number(draftSettings.memoryLimit) || 0,
-      maxOutputTokens: Number(draftSettings.maxOutputTokens) || 700,
+      maxOutputTokens: Number(draftSettings.maxOutputTokens) || 500,
       temperature: Number(draftSettings.temperature) || 0.9,
     };
     setSettings(next);
@@ -186,16 +324,17 @@ export default function App() {
     try {
       const { result, bible } = await importFile(file);
       const selected = result.selected.map((event) => ({ ...event, imported: true }));
-      setData(bible);
-      setEvents(selected);
-      setMessages(selected);
-      setContext(null);
-      setSource('imported');
-      await saveSession({
+      const character = makeCharacter({
         bible,
         events: selected,
-        importedAt: new Date().toISOString(),
+        messages: selected,
+        source: 'imported',
       });
+      const characters = [character, ...snapshotCharacters()];
+      const next = { ...library, activeId: character.id, characters };
+      setLibrary(next);
+      await saveLibrary(next);
+      applyCharacter(character);
       setImportStatus(`导入完成：${selected.length} 条主线`);
       setView('chat');
     } catch (importError) {
@@ -206,9 +345,31 @@ export default function App() {
     }
   };
 
-  const resetToDemo = async () => {
-    await clearSession();
-    window.location.reload();
+  const rememberMessage = (message) => {
+    const text = String(message.text ?? '').trim().slice(0, 180);
+    if (!text) return;
+    setData((previous) => {
+      if (!previous) return previous;
+      const memories = previous.memories ?? [];
+      if (memories.some((memory) => memory.text === text)) return previous;
+      return {
+        ...previous,
+        memories: [...memories, { kind: '事件', text, importance: 0.8 }],
+      };
+    });
+    setImportStatus('已加入长期记忆');
+  };
+
+  const removeMemory = (index) => {
+    setData((previous) =>
+      previous
+        ? {
+            ...previous,
+            memories: previous.memories.filter((_, memoryIndex) => memoryIndex !== index),
+          }
+        : previous,
+    );
+    setImportStatus('已删除一条长期记忆');
   };
 
   const stop = () => abortRef.current?.abort();
@@ -344,13 +505,18 @@ export default function App() {
             },
           ]
         : [...messages, userMessage];
-      await saveSession({
-        bible: data,
-        events,
-        messages: finalMessages,
-        source,
-        savedAt: new Date().toISOString(),
-      }).catch(() => {});
+      const characters = snapshotCharacters().map((character) =>
+        character.id === library.activeId
+          ? {
+              ...character,
+              messages: finalMessages,
+              updatedAt: new Date().toISOString(),
+            }
+          : character,
+      );
+      const next = { ...library, characters };
+      setLibrary(next);
+      await saveLibrary(next).catch(() => {});
       setStreaming(false);
       abortRef.current = null;
     }
@@ -359,7 +525,7 @@ export default function App() {
   if (error && !data) {
     return (
       <main className="boot-error">
-        <h1>whale-memory</h1>
+        <h1>鲸忆</h1>
         <p>{error}</p>
       </main>
     );
@@ -368,26 +534,43 @@ export default function App() {
   if (!data) {
     return (
       <main className="boot-error">
-        <h1>whale-memory</h1>
-        <p>正在加载本地数据…</p>
+        <h1>鲸忆</h1>
+        <p>正在加载本地角色…</p>
       </main>
     );
   }
 
   const headerTitle =
-    view === 'chat' ? data.persona.name : view === 'memory' ? '记忆' : '设置';
+    view === 'chat'
+      ? data.persona.name
+      : view === 'characters'
+        ? '角色'
+        : view === 'memory'
+          ? '记忆'
+          : '设置';
   const headerSub =
     view === 'chat'
-      ? `${data.memories.length} 条长期记忆 · ${importedCount} 条导入 · ${chatOptions.maxRecent} 轮上下文`
-      : view === 'memory'
-        ? data.title
-        : '模型、省流和成本';
+      ? `${data.memories.length} 条长期记忆 · ${importedCount} 条导入 · ${library.characters.length} 个角色`
+      : view === 'characters'
+        ? `${library.characters.length} 个角色`
+        : view === 'memory'
+          ? data.title
+          : '模型、省流和成本';
 
   return (
     <div className="app">
       <header className="topbar">
         <div className="topbar-left">
-          {view !== 'chat' && (
+          {view === 'chat' && (
+            <button
+              className="icon-btn"
+              onClick={() => setView('characters')}
+              aria-label="角色列表"
+            >
+              ☰
+            </button>
+          )}
+          {view !== 'chat' && view !== 'characters' && (
             <button className="icon-btn" onClick={() => setView('chat')} aria-label="返回">
               ←
             </button>
@@ -409,7 +592,7 @@ export default function App() {
               </button>
             </>
           )}
-          {view === 'memory' && (
+          {view === 'characters' && (
             <>
               <button
                 className="ghost"
@@ -418,11 +601,16 @@ export default function App() {
               >
                 {importing ? '导入中…' : '导入'}
               </button>
-              {source === 'imported' && (
-                <button className="ghost" onClick={resetToDemo}>
-                  恢复 demo
-                </button>
-              )}
+              <button className="ghost" onClick={openSettings}>
+                设置
+              </button>
+            </>
+          )}
+          {view === 'memory' && (
+            <>
+              <button className="ghost" onClick={deleteActive}>
+                删除
+              </button>
               <button className="ghost" onClick={openSettings}>
                 设置
               </button>
@@ -484,6 +672,7 @@ export default function App() {
                   key={message.id}
                   message={message}
                   personaName={data.persona.name}
+                  onRemember={rememberMessage}
                 />
               ))}
               <div ref={bottomRef} />
@@ -529,9 +718,55 @@ export default function App() {
         </main>
       )}
 
-      {view === 'memory' && (
-        <MemoryPage data={data} chatOptions={chatOptions} context={context} />
+      {view === 'characters' && (
+        <main className="page">
+          <div className="page-inner">
+            <div className="character-grid">
+              {library.characters.map((character) => (
+                <button
+                  key={character.id}
+                  className={`character-card ${
+                    character.id === library.activeId ? 'active' : ''
+                  }`}
+                  onClick={() => switchCharacter(character.id)}
+                >
+                  <span className="avatar">{firstChar(character.name)}</span>
+                  <span className="character-info">
+                    <strong>{character.name}</strong>
+                    <span>{character.title}</span>
+                    <small>
+                      {character.bible?.memories?.length ?? 0} 条记忆 ·{' '}
+                      {character.messages?.length ?? 0} 条消息
+                    </small>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="page-actions">
+              <button
+                className="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? '导入中…' : '导入新角色'}
+              </button>
+              <button className="ghost" onClick={openDemoCharacter}>
+                使用 demo 角色
+              </button>
+            </div>
+          </div>
+        </main>
       )}
+
+      {view === 'memory' && (
+        <MemoryPage
+          data={data}
+          chatOptions={chatOptions}
+          context={context}
+          onRemoveMemory={removeMemory}
+        />
+      )}
+
       {view === 'settings' && (
         <SettingsPage
           draftSettings={draftSettings}
@@ -542,13 +777,16 @@ export default function App() {
   );
 }
 
-function Message({ message, personaName }) {
+function Message({ message, personaName, onRemember }) {
   const isUser = message.role === 'user';
   return (
     <article className={`message ${isUser ? 'user' : 'assistant'}`}>
       <div className="message-meta">
         <span>{isUser ? '你' : message.speaker || personaName}</span>
         <span>{timeLabel(message.createdAt)}</span>
+        <button className="remember-btn" onClick={() => onRemember(message)}>
+          记住
+        </button>
       </div>
       <div className="message-text">
         {message.text}
@@ -603,7 +841,7 @@ function InjectionSection({ context }) {
   );
 }
 
-function MemoryPage({ data, chatOptions, context }) {
+function MemoryPage({ data, chatOptions, context, onRemoveMemory }) {
   const persona = data.persona;
   const relationship = data.relationship;
 
@@ -688,6 +926,13 @@ function MemoryPage({ data, chatOptions, context }) {
                 <span className="kind">{memory.kind}</span>
                 {memory.text}
                 <span className="importance">{memory.importance.toFixed(2)}</span>
+                <button
+                  className="memory-remove"
+                  onClick={() => onRemoveMemory(index)}
+                  aria-label="删除记忆"
+                >
+                  ×
+                </button>
               </li>
             ))}
           </ul>
@@ -820,7 +1065,7 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
                 type="number"
                 min="2"
                 max="20"
-                value={draftSettings.maxRecent ?? 8}
+                value={draftSettings.maxRecent ?? 6}
                 onChange={(event) => update('maxRecent', event.target.value)}
               />
             </label>
@@ -830,7 +1075,7 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
                 type="number"
                 min="0"
                 max="12"
-                value={draftSettings.retrievalLimit ?? 6}
+                value={draftSettings.retrievalLimit ?? 4}
                 onChange={(event) => update('retrievalLimit', event.target.value)}
               />
             </label>
@@ -840,7 +1085,7 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
                 type="number"
                 min="0"
                 max="20"
-                value={draftSettings.memoryLimit ?? 8}
+                value={draftSettings.memoryLimit ?? 6}
                 onChange={(event) => update('memoryLimit', event.target.value)}
               />
             </label>
@@ -850,7 +1095,7 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
                 type="number"
                 min="200"
                 max="2000"
-                value={draftSettings.maxOutputTokens ?? 700}
+                value={draftSettings.maxOutputTokens ?? 500}
                 onChange={(event) => update('maxOutputTokens', event.target.value)}
               />
             </label>

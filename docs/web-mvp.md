@@ -3,7 +3,8 @@
 ## 界面
 
 - **聊天页**：只有角色名、消息流、输入框；不显示人设/记忆侧栏。
-- **记忆页**：上一轮注入、人设、关系、长期记忆、时间线、语气样本、未结束的线；导入/恢复 demo 也在这里。
+- **记忆页**：上一轮注入、人设、关系、长期记忆、时间线、语气样本、未结束的线；删除当前角色也在这里。
+- **角色页**：左上角 ☰ 进入；角色卡片列表、导入新角色、使用 demo 角色。
 - **设置页**：模型、key、省流参数（上下文轮数/往事条数/记忆条数/输出 tokens/温度）。
 
 ## 组成
@@ -63,13 +64,19 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - 「导入」按钮接受 `.json` / `.jsonl` / `.txt`。
 - 浏览器里直接调用 `src/import/index.mjs` 的 `importChat()`；支持 DeepSeek RAW、官方假设形状、tree、ChatGPT、SillyTavern、纯文本。
 - 解析后把主线消息 POST 到 `/api/extract`，生成 story bible。
-- 结果存 IndexedDB（`whale-memory` / `session` / `current`）；刷新自动载入。
-- 「恢复 demo」清掉 IndexedDB 并重载。
+- 结果作为新角色存 IndexedDB（`whale-memory` / `session` / `library` / `characters`）；刷新自动载入。
+- 角色列表可切换角色、新建 demo 角色；删除当前角色会移除它的聊天记录。
+
+## 角色与手动记忆
+
+- 每个角色有独立的 `bible / events / messages / source`，切换角色不会串记忆。
+- 消息右上角「记住」：把该句写进长期记忆，下一轮就会注入。
+- 记忆页每条长期记忆右侧有 `×`，可删除。
 
 ## 当前限制
 
 - DeepSeek 官方导出是 zip，浏览器暂不解压；先手动解压，选 `conversation.json`。
-- 多角色切换 UI 还没有；`character_id` 隔离在 SQLite 层已留好。
+- 多角色切换已做；重命名、排序、搜索还没做。
 - 移动端访问需要 `adb reverse` 或 Capacitor 内嵌，暂不把 gateway 暴露到局域网。
 - 流式只渲染 `delta.content`；`reasoning_content` 已通过关闭思考避免。
 - 聊天记录已写入 IndexedDB：刷新/重启恢复导入的 story bible、主线消息和后续对话。
