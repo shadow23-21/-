@@ -189,6 +189,7 @@ select {
 }
 
 .chat-view {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -287,9 +288,14 @@ select {
   font-size: 10px;
 }
 
-.remember-btn {
+.message-actions {
+  display: flex;
   margin-left: auto;
-  padding: 0 4px;
+  gap: 6px;
+}
+
+.message-actions button {
+  padding: 0 2px;
   border: 0;
   background: transparent;
   color: #64769b;
@@ -297,8 +303,23 @@ select {
   font-size: 10px;
 }
 
-.remember-btn:hover {
+.message-actions button:hover {
   color: var(--accent);
+}
+
+.jump-bottom {
+  position: absolute;
+  right: 18px;
+  bottom: 180px;
+  z-index: 5;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #17213a;
+  color: var(--text);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font-size: 11px;
 }
 
 .message.user .message-meta {

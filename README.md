@@ -40,6 +40,10 @@
 - [x] PWA：manifest + 安装到桌面 + service worker 离线壳
 - [x] 签名 release APK + AAB（v2/v3，keystore 已生成）
 - [x] 消费端只保留兑换码/额度；隐藏模型、API key、直连等技术设置
+- [x] 新建角色完整字段：别名/年龄/外貌/性格/习惯/关系/称呼/边界/初始记忆/未结束的线
+- [x] 删除消息里的 `（第X天）` 前缀
+- [x] 消息复制/删除、回到底部
+- [x] Dockerfile + docker-compose，一键部 gateway
 - [x] 商店素材包 + 上架/合规清单（`store/`）
 - [x] 变现方案：BYOK + 托管额度，先兑换码后支付/IAP（`docs/monetization.md`）
 - [x] 托管额度：SQLite 账户/兑换码/扣费 + App 兑换/余额/免 key 聊天（`docs/managed-mode.md`）
@@ -101,7 +105,9 @@ node server/gateway.mjs
 - 主界面是纯聊天：只有角色名、消息流和输入框；「记忆」和「设置」是独立页面；左上角 ☰ 进入角色列表。
 - 角色列表：每个角色独立的 story bible / 消息 / 记忆；支持搜索、排序（最近/名字/记忆数）、改名；「导入新角色」追加，不覆盖当前角色。
 - 支持安装到桌面：manifest + standalone + service worker；Chrome/Edge 角色页会出现「安装」，iOS Safari 用分享 → 添加到主屏幕。
-- 每条消息右上角「记住」：把这句话写进长期记忆，下一轮就会注入；记忆页可编辑 kind/文本/重要度，也可逐条删除。
+- 每条消息右上角「复制 / 记住 / 删除」；长聊天有「↓ 最新」回到底部。
+- 新建角色可填别名、年龄、外貌、性格、习惯、背景、角色定位、双方称呼、边界、未解决矛盾、初始长期记忆、未结束的线和开场白。
+- 导入/历史消息里的 `（第X天）` 前缀会在加载时自动去掉。
 - 记忆页「导出」把当前角色打成 `.json` 角色包（story bible + events + messages）；「导入新角色」会自动识别角色包。
 - 上下文预算固定在代码内（默认 1500）；超预算时先裁往事，再裁长期记忆，最后裁旧对话。
 - App 名「鲸忆」，Android 图标是蓝紫渐变 + 鲸字。
@@ -154,7 +160,12 @@ npm.cmd run build
 ```
 
 用户：设置 → 鲸忆额度 → 输入兑换码 → 保存 → 聊天。每轮扣 1 次；上游失败自动退回。
-完整部署/卖码/限流清单见 [docs/managed-mode.md](docs/managed-mode.md)。
+完整部署/卖码/限流清单见 [docs/managed-mode.md](docs/managed-mode.md)；公网部署（Railway/Zeabur/VPS/Docker）见 [docs/deploy.md](docs/deploy.md)。
+
+```bash
+# VPS 最简：Docker + 反向代理
+docker compose up -d
+```
 
 ## 签名发布（可直接发给别人）
 

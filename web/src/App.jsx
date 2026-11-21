@@ -19,9 +19,20 @@ const INITIAL_NEW_CHARACTER = {
   title: '',
   userName: '你',
   stage: '初识',
-  speechStyle: '',
+  aliases: '',
+  age: '',
+  appearance: '',
   personality: '',
+  speechStyle: '',
+  habits: '',
   background: '',
+  characterRole: '',
+  addressUser: '',
+  addressCharacter: '',
+  boundaries: '',
+  tensions: '',
+  memories: '',
+  openThreads: '',
   opening: '',
 };
 
@@ -60,6 +71,32 @@ const timeLabel = (iso) => {
 
 const firstChar = (name) => String(name || '?').slice(0, 1);
 
+const stripDayLabel = (text) =>
+  String(text ?? '').replace(
+    /^\s*[（(【\[]?\s*第\s*\d+\s*天\s*[）)】\]]?\s*/u,
+    '',
+  );
+
+function cleanBible(bible) {
+  if (!bible) return bible;
+  return {
+    ...bible,
+    timeline: (bible.timeline ?? []).map((item) => ({
+      ...item,
+      when: stripDayLabel(item.when),
+    })),
+    memories: (bible.memories ?? []).map((memory) => ({
+      ...memory,
+      text: stripDayLabel(memory.text),
+    })),
+    style_samples: (bible.style_samples ?? []).map((sample) => stripDayLabel(sample)),
+  };
+}
+
+function cleanTextItems(items) {
+  return (items ?? []).map((item) => ({ ...item, text: stripDayLabel(item.text) }));
+}
+
 const loadSettings = () => {
   try {
     const stored = JSON.parse(localStorage.getItem('whale-settings') || '{}');
@@ -76,9 +113,11 @@ const loadSettings = () => {
 
 function normalizeMessages(character) {
   if (Array.isArray(character.messages) && character.messages.length > 0) {
-    return character.messages;
+    return cleanTextItems(character.messages);
   }
-  return (character.events ?? []).map((event) => ({ ...event, imported: true }));
+  return cleanTextItems(
+    (character.events ?? []).map((event) => ({ ...event, imported: true })),
+  );
 }
 
 function makeCharacter({ id, bible, events, messages, source }) {
@@ -88,9 +127,9 @@ function makeCharacter({ id, bible, events, messages, source }) {
     name: bible?.persona?.name ?? '角色',
     title: bible?.title ?? '未命名故事',
     source: source ?? 'imported',
-    bible,
-    events: events ?? [],
-    messages: (messages ?? []).map(({ pending, ...message }) => message),
+    bible: cleanBible(bible),
+    events: cleanTextItems(events),
+    messages: cleanTextItems(messages).map(({ pending, ...message }) => message),
     createdAt: now,
     updatedAt: now,
   };
@@ -129,6 +168,8 @@ export default function App() {
   const abortRef = useRef(null);
   const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
+  const chatScrollRef = useRef(null);
+  const [showJump, setShowJump] = useState(false);
 
   const config = useMemo(
     () => ({
@@ -160,8 +201,8 @@ export default function App() {
   );
 
   const applyCharacter = (character) => {
-    setData(character.bible);
-    setEvents(character.events ?? []);
+    setData(cleanBible(character.bible));
+    setEvents(cleanTextItems(character.events));
     setMessages(normalizeMessages(character));
     setSource(character.source ?? 'demo');
     setImportStatus('');
@@ -242,7 +283,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!accountToken || !API_BASE) {
+    if (!accountToken) {
       setCredits(null);
       return undefined;
     }
@@ -374,10 +415,30 @@ export default function App() {
 
     const title = newCharacter.title.trim() || `和${name}的故事`;
     const userName = newCharacter.userName.trim() || '你';
-    const personality = newCharacter.personality
-      .split(/[，,、]/)
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const list = (value) =>
+      String(value ?? '')
+        .split(/[，,、\n]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    const lines = (value) =>
+      String(value ?? '')
+        .split(/\n/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    const personality = list(newCharacter.personality);
+    const aliases = list(newCharacter.aliases);
+    const habits = list(newCharacter.habits);
+    const addressUser = list(newCharacter.addressUser);
+    const addressCharacter = list(newCharacter.addressCharacter);
+    const boundaries = lines(newCharacter.boundaries);
+    const tensions = lines(newCharacter.tensions);
+    const openThreads = lines(newCharacter.openThreads);
+    const memories = lines(newCharacter.memories).map((text) => ({
+      kind: '事件',
+      text,
+      importance: 0.7,
+    }));
     const opening = newCharacter.opening.trim();
     const now = new Date().toISOString();
 
@@ -385,26 +446,29 @@ export default function App() {
       title,
       persona: {
         name,
-        aliases: [],
-        age: '未知',
-        appearance: '未知',
+        aliases,
+        age: newCharacter.age.trim() || '未知',
+        appearance: newCharacter.appearance.trim() || '未知',
         personality,
         speech_style: newCharacter.speechStyle.trim() || '未知',
         background: newCharacter.background.trim() || '未知',
-        habits: [],
+        habits,
       },
       relationship: {
         stage: newCharacter.stage.trim() || '初识',
         user_name: userName,
-        character_role: '',
-        address_terms: { user: [userName], character: [name] },
-        boundaries: [],
-        tensions: [],
+        character_role: newCharacter.characterRole.trim() || '恋人',
+        address_terms: {
+          user: addressUser.length > 0 ? addressUser : [userName],
+          character: addressCharacter.length > 0 ? addressCharacter : [name],
+        },
+        boundaries,
+        tensions,
       },
       timeline: [],
-      memories: [],
+      memories,
       style_samples: opening ? [opening] : [],
-      open_threads: [],
+      open_threads: openThreads,
     };
 
     const openingMessages = opening
@@ -497,7 +561,7 @@ export default function App() {
   };
 
   const refreshBalance = async () => {
-    if (!accountToken || !API_BASE) return;
+    if (!accountToken) return;
     try {
       const response = await fetch(`${API_BASE}/api/balance`, {
         headers: { Authorization: `Bearer ${accountToken}` },
@@ -513,10 +577,6 @@ export default function App() {
   const redeemAccount = async () => {
     const code = redeemInput.trim();
     if (!code) return;
-    if (!API_BASE) {
-      setError('托管模式需要先配置公网 gateway');
-      return;
-    }
     setError('');
     try {
       const headers = { 'Content-Type': 'application/json' };
@@ -589,7 +649,10 @@ export default function App() {
       }
 
       const { result, bible } = await importFile(file);
-      const selected = result.selected.map((event) => ({ ...event, imported: true }));
+      const selected = cleanTextItems(result.selected).map((event) => ({
+        ...event,
+        imported: true,
+      }));
       const character = makeCharacter({
         bible,
         events: selected,
@@ -609,6 +672,21 @@ export default function App() {
     } finally {
       setImporting(false);
     }
+  };
+
+  const copyMessage = async (message) => {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setImportStatus('已复制');
+    } catch {
+      setError('复制失败，请手动选择文字');
+    }
+  };
+
+  const deleteMessage = (message) => {
+    if (!window.confirm('删除这条消息？')) return;
+    setMessages((previous) => previous.filter((item) => item.id !== message.id));
+    setEvents((previous) => previous.filter((item) => item.id !== message.id));
   };
 
   const rememberMessage = (message) => {
@@ -712,7 +790,6 @@ export default function App() {
 
       if (config.managed) {
         if (!accountToken) throw new Error('托管模式需要先兑换额度');
-        if (!API_BASE) throw new Error('托管模式需要先配置公网 gateway');
         url = `${API_BASE}/api/chat`;
         headers = {
           'Content-Type': 'application/json',
@@ -1027,7 +1104,16 @@ export default function App() {
             {importStatus && <span className="thread-note">{importStatus}</span>}
           </div>
 
-          <div className="chat-scroll">
+          <div
+            className="chat-scroll"
+            ref={chatScrollRef}
+            onScroll={(event) => {
+              const element = event.currentTarget;
+              const distance =
+                element.scrollHeight - element.scrollTop - element.clientHeight;
+              setShowJump(distance > 240);
+            }}
+          >
             <div className="chat-thread">
               {!showAll && messages.length > 60 && (
                 <div className="older-hint">已折叠较早的 {messages.length - 60} 条</div>
@@ -1045,11 +1131,25 @@ export default function App() {
                   message={message}
                   personaName={data.persona.name}
                   onRemember={rememberMessage}
+                  onCopy={copyMessage}
+                  onDelete={deleteMessage}
                 />
               ))}
               <div ref={bottomRef} />
             </div>
           </div>
+
+          {showJump && (
+            <button
+              className="jump-bottom"
+              onClick={() => {
+                bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+                setShowJump(false);
+              }}
+            >
+              ↓ 最新
+            </button>
+          )}
 
           <div className="composer-wrap">
             {quotaNotice && (
@@ -1180,62 +1280,99 @@ export default function App() {
           <div className="page-inner">
             <section className="page-card">
               <h3>基本信息</h3>
+              <div className="field-grid">
+                <label className="field">
+                  角色名 *
+                  <input
+                    autoFocus
+                    value={newCharacter.name}
+                    placeholder="比如：沈砚"
+                    onChange={(event) => updateNewCharacter('name', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  故事标题
+                  <input
+                    value={newCharacter.title}
+                    placeholder={`默认：和${newCharacter.name || '角色'}的故事`}
+                    onChange={(event) => updateNewCharacter('title', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  你的名字
+                  <input
+                    value={newCharacter.userName}
+                    onChange={(event) => updateNewCharacter('userName', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  关系阶段
+                  <input
+                    value={newCharacter.stage}
+                    placeholder="初识 / 暧昧 / 已在一起…"
+                    onChange={(event) => updateNewCharacter('stage', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  别名（逗号分隔）
+                  <input
+                    value={newCharacter.aliases}
+                    placeholder="沈医生、阿砚"
+                    onChange={(event) => updateNewCharacter('aliases', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  年龄
+                  <input
+                    value={newCharacter.age}
+                    placeholder="28"
+                    onChange={(event) => updateNewCharacter('age', event.target.value)}
+                  />
+                </label>
+              </div>
               <label className="field">
-                角色名 *
-                <input
-                  autoFocus
-                  value={newCharacter.name}
-                  placeholder="比如：沈砚"
-                  onChange={(event) => updateNewCharacter('name', event.target.value)}
-                />
-              </label>
-              <label className="field">
-                故事标题
-                <input
-                  value={newCharacter.title}
-                  placeholder={`默认：和${newCharacter.name || '角色'}的故事`}
-                  onChange={(event) => updateNewCharacter('title', event.target.value)}
-                />
-              </label>
-              <label className="field">
-                你的名字
-                <input
-                  value={newCharacter.userName}
-                  onChange={(event) => updateNewCharacter('userName', event.target.value)}
-                />
-              </label>
-              <label className="field">
-                关系阶段
-                <input
-                  value={newCharacter.stage}
-                  placeholder="初识 / 暧昧 / 已在一起…"
-                  onChange={(event) => updateNewCharacter('stage', event.target.value)}
+                外貌
+                <textarea
+                  rows={2}
+                  value={newCharacter.appearance}
+                  placeholder="白大褂、袖口挽到小臂、左手腕有一道旧疤…"
+                  onChange={(event) => updateNewCharacter('appearance', event.target.value)}
                 />
               </label>
             </section>
 
             <section className="page-card">
               <h3>人设</h3>
-              <label className="field">
-                性格（逗号分隔）
-                <input
-                  value={newCharacter.personality}
-                  placeholder="克制、温柔、嘴硬"
-                  onChange={(event) =>
-                    updateNewCharacter('personality', event.target.value)
-                  }
-                />
-              </label>
-              <label className="field">
-                说话风格
-                <input
-                  value={newCharacter.speechStyle}
-                  placeholder="话少、短句、行动多于语言"
-                  onChange={(event) =>
-                    updateNewCharacter('speechStyle', event.target.value)
-                  }
-                />
-              </label>
+              <div className="field-grid">
+                <label className="field">
+                  性格（逗号分隔）
+                  <input
+                    value={newCharacter.personality}
+                    placeholder="克制、温柔、嘴硬"
+                    onChange={(event) =>
+                      updateNewCharacter('personality', event.target.value)
+                    }
+                  />
+                </label>
+                <label className="field">
+                  说话风格
+                  <input
+                    value={newCharacter.speechStyle}
+                    placeholder="话少、短句、行动多于语言"
+                    onChange={(event) =>
+                      updateNewCharacter('speechStyle', event.target.value)
+                    }
+                  />
+                </label>
+                <label className="field">
+                  习惯（逗号分隔）
+                  <input
+                    value={newCharacter.habits}
+                    placeholder="把伞往你那边偏、淋雨容易发烧"
+                    onChange={(event) => updateNewCharacter('habits', event.target.value)}
+                  />
+                </label>
+              </div>
               <label className="field">
                 背景 / 设定
                 <textarea
@@ -1247,6 +1384,94 @@ export default function App() {
                   }
                 />
               </label>
+            </section>
+
+            <section className="page-card">
+              <h3>关系</h3>
+              <div className="field-grid">
+                <label className="field">
+                  角色定位
+                  <input
+                    value={newCharacter.characterRole}
+                    placeholder="恋人 / 医生 / 隔壁花店老板"
+                    onChange={(event) =>
+                      updateNewCharacter('characterRole', event.target.value)
+                    }
+                  />
+                </label>
+                <label className="field">
+                  角色对你的称呼
+                  <input
+                    value={newCharacter.addressUser}
+                    placeholder="你、小朋友、阿晚"
+                    onChange={(event) =>
+                      updateNewCharacter('addressUser', event.target.value)
+                    }
+                  />
+                </label>
+                <label className="field">
+                  你对角色的称呼
+                  <input
+                    value={newCharacter.addressCharacter}
+                    placeholder="沈砚、沈医生"
+                    onChange={(event) =>
+                      updateNewCharacter('addressCharacter', event.target.value)
+                    }
+                  />
+                </label>
+              </div>
+              <label className="field">
+                边界（一行一条）
+                <textarea
+                  rows={3}
+                  value={newCharacter.boundaries}
+                  placeholder="不要替他决定人生；不要提顾青…"
+                  onChange={(event) =>
+                    updateNewCharacter('boundaries', event.target.value)
+                  }
+                />
+              </label>
+              <label className="field">
+                未解决的矛盾（一行一条）
+                <textarea
+                  rows={3}
+                  value={newCharacter.tensions}
+                  placeholder="他淋雨会发烧，却仍坚持送你…"
+                  onChange={(event) =>
+                    updateNewCharacter('tensions', event.target.value)
+                  }
+                />
+              </label>
+            </section>
+
+            <section className="page-card">
+              <h3>初始记忆</h3>
+              <label className="field">
+                长期记忆（一行一条，可选）
+                <textarea
+                  rows={4}
+                  value={newCharacter.memories}
+                  placeholder="第一次见面是在医院走廊；他习惯把伞往你那边偏…"
+                  onChange={(event) =>
+                    updateNewCharacter('memories', event.target.value)
+                  }
+                />
+              </label>
+              <label className="field">
+                未结束的线（一行一条，可选）
+                <textarea
+                  rows={3}
+                  value={newCharacter.openThreads}
+                  placeholder="周末去看海；他答应过要解释那通电话…"
+                  onChange={(event) =>
+                    updateNewCharacter('openThreads', event.target.value)
+                  }
+                />
+              </label>
+            </section>
+
+            <section className="page-card">
+              <h3>开场</h3>
               <label className="field">
                 开场白（可选）
                 <textarea
@@ -1294,16 +1519,18 @@ export default function App() {
   );
 }
 
-function Message({ message, personaName, onRemember }) {
+function Message({ message, personaName, onRemember, onCopy, onDelete }) {
   const isUser = message.role === 'user';
   return (
     <article className={`message ${isUser ? 'user' : 'assistant'}`}>
       <div className="message-meta">
         <span>{isUser ? '你' : message.speaker || personaName}</span>
         <span>{timeLabel(message.createdAt)}</span>
-        <button className="remember-btn" onClick={() => onRemember(message)}>
-          记住
-        </button>
+        <div className="message-actions">
+          <button onClick={() => onCopy(message)}>复制</button>
+          <button onClick={() => onRemember(message)}>记住</button>
+          <button onClick={() => onDelete(message)}>删除</button>
+        </div>
       </div>
       <div className="message-text">
         {message.text}
@@ -1533,7 +1760,7 @@ function MemoryPage({ data, chatOptions, onUpdateMemory, onRemoveMemory }) {
           <ul className="memory-list">
             {data.timeline.map((item, index) => (
               <li key={`${item.event}-${index}`}>
-                <span className="kind">{item.when}</span>
+                {item.when && <span className="kind">{item.when}</span>}
                 {item.event}
               </li>
             ))}

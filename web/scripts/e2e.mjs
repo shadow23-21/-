@@ -66,6 +66,12 @@ try {
   await page.screenshot({ path: '../out/web-demo/imported.png' });
   console.log('import: ok');
 
+  const dayPrefix = await page.evaluate(() =>
+    /[（(]第\s*\d+\s*天/.test(document.body.innerText),
+  );
+  if (dayPrefix) throw new Error('day prefix remains in chat');
+  console.log('day prefix: clean');
+
   const assistantCount = await page.$$eval(
     '.message.assistant',
     (nodes) => nodes.length,
@@ -126,7 +132,9 @@ try {
   await page.waitForSelector('.composer textarea');
 
   await page.evaluate(() => {
-    const buttons = [...document.querySelectorAll('.remember-btn')];
+    const buttons = [...document.querySelectorAll('.message-actions button')].filter(
+      (button) => button.textContent.trim() === '记住',
+    );
     buttons.at(-1)?.click();
   });
   await page.waitForFunction(() => document.body.innerText.includes('已加入长期记忆'));

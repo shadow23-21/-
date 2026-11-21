@@ -83,8 +83,7 @@ const iso = (i) => new Date(start + i * 5 * 60 * 1000).toISOString();
 
 const messages = [];
 for (let i = 0; i < 120; i++) {
-  const day = Math.floor(i / 4) + 1;
-  const userText = `（第${day}天）${userLines[i % userLines.length]}`;
+  const userText = userLines[i % userLines.length];
   const lastId = messages.length ? messages[messages.length - 1].id : null;
   messages.push({
     id: `m${String(messages.length + 1).padStart(4, '0')}`,

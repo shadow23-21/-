@@ -1,0 +1,16 @@
+services:
+  gateway:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      BILLING_DB: /data/billing.db
+    volumes:
+      - whale-data:/data
+
+volumes:
+  whale-data:
