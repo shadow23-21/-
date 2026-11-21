@@ -18,7 +18,9 @@
 - [x] 6 份导入 fixture（覆盖 DeepSeek RAW/官方假设/树/ChatGPT/SillyTavern/纯文本）
 - [x] DeepSeek 官方导出真实 schema 已用公开 RAW 样本验证（11 条消息，8 条选中，3 条分支归档）
 - [x] 导入 CLI：`node scripts/import-demo.mjs <file>`
-- [ ] SQLite schema + story bible
+- [x] SQLite schema + 导入入库（`whale.db`，含 FTS5 索引）
+- [x] story bible 抽取（GLM-4.7-Flash，关闭思考；失败可降级确定性摘要）
+- [x] 本地 HTML demo（`index.html`，可直接打开）
 - [ ] PWA 聊天 + BYOK
 - [ ] Android 包
 
@@ -30,6 +32,29 @@ fixtures/   合成测试数据（不含真实用户数据）
 scripts/    开发脚本
 src/        应用代码（待开始）
 ```
+
+## 已跑通
+
+```bash
+# 导入 + 入库 + 抽取 + 生成 demo
+node scripts/build-memory.mjs fixtures/deepseek-official.json \
+  --out out/demo --title "和沈砚的一百二十天"
+
+# 不调用模型，纯离线
+node scripts/build-memory.mjs fixtures/deepseek-raw.json \
+  --out out/offline --no-llm
+```
+
+输出：
+
+- `whale.db`：SQLite，含 `conversations / events / characters / memories / story_bible`
+- `story-bible.json`：人设、关系、时间线、记忆、语气样本
+- `persona.md`：可直接读的角色卡
+- `report.md`：导入统计 + 记忆摘要
+- `events.jsonl`：归一化主线消息
+- `index.html`：本地静态 demo（聊天 + 记忆面板）
+
+抽取用 `glm-4.7-flash`，请求里带 `thinking: { type: "disabled" }`，否则它会把 token 全花在思考上、正文为空。
 
 ## 计划技术栈
 

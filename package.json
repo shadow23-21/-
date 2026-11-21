@@ -7,7 +7,8 @@
   "scripts": {
     "test": "node --test",
     "fixtures": "node scripts/make-fixtures.mjs",
-    "demo": "node scripts/import-demo.mjs"
+    "demo": "node scripts/import-demo.mjs",
+    "memory": "node scripts/build-memory.mjs"
   },
   "engines": {
     "node": ">=22"

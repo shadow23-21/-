@@ -71,6 +71,7 @@ export function parseDeepSeekOfficial(data) {
         branchId: message.branch_group ?? message.branchId ?? undefined,
         selected: message.selected !== false,
         source: 'deepseek-official',
+        title: conversation.title ?? undefined,
       });
     }
   }
@@ -122,6 +123,7 @@ export function parseDeepSeekTree(data) {
     createdAt: toIso(node.created_at ?? node.createdAt, index),
     selected: selected.has(node.id),
     source: 'deepseek-tree',
+    title: data?.chat_session?.title ?? undefined,
   }));
 }
 
@@ -170,6 +172,7 @@ export function parseChatGPT(data) {
         createdAt: toIso(message.create_time, events.length),
         selected: selected.has(id),
         source: 'chatgpt',
+        title: conversation.title ?? undefined,
       });
     }
   }
