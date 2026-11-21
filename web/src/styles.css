@@ -501,6 +501,26 @@ select {
   margin-top: 0;
 }
 
+.quota-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 190, 100, 0.35);
+  border-radius: 12px;
+  background: rgba(90, 60, 24, 0.42);
+  color: #ffd28a;
+  font-size: 12px;
+}
+
+.quota-banner .primary {
+  flex: none;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
 .redeem-gate {
   display: flex;
   align-items: center;

@@ -124,6 +124,7 @@ export default function App() {
   );
   const [credits, setCredits] = useState(null);
   const [redeemInput, setRedeemInput] = useState('');
+  const [quotaNotice, setQuotaNotice] = useState(false);
 
   const abortRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -533,6 +534,7 @@ export default function App() {
       setAccountToken(payload.token);
       setCredits(payload.credits);
       setRedeemInput('');
+      setQuotaNotice(false);
       persistSettings({
         ...settings,
         managed: true,
@@ -655,6 +657,11 @@ export default function App() {
   const send = async (textArg) => {
     const text = String(textArg ?? draft).trim();
     if (!text || streaming || !data) return;
+    if (!accountToken || credits === 0) {
+      setQuotaNotice(true);
+      return;
+    }
+    setQuotaNotice(false);
 
     setError('');
     const userMessage = {
@@ -1045,64 +1052,61 @@ export default function App() {
           </div>
 
           <div className="composer-wrap">
-            {!accountToken || credits === 0 ? (
-              <div className="redeem-gate">
-                <strong>
-                  {accountToken ? '额度用完了，输入新兑换码' : '输入兑换码开始聊天'}
-                </strong>
-                <span>在微店购买后自动发货</span>
-                <div className="managed-redeem">
-                  <input
-                    value={redeemInput}
-                    placeholder="输入兑换码"
-                    onChange={(event) => setRedeemInput(event.target.value)}
-                  />
+            {quotaNotice && (
+              <div className="quota-banner">
+                <span>额度已用完，兑换后继续聊</span>
+                <button
+                  className="primary small"
+                  onClick={() => {
+                    setQuotaNotice(false);
+                    setView('settings');
+                  }}
+                >
+                  去兑换
+                </button>
+              </div>
+            )}
+            <div className="composer">
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    send();
+                  }
+                }}
+                placeholder={`给「${data.persona.name}」发消息…`}
+                rows={1}
+              />
+              <div className="composer-row">
+                <span className="hint">
+                  {accountToken
+                    ? credits === null
+                      ? '加载额度…'
+                      : `剩余 ${credits} 次`
+                    : '未兑换'}
+                </span>
+                {streaming ? (
+                  <button className="danger" onClick={stop}>
+                    停止
+                  </button>
+                ) : (
                   <button
                     className="primary"
-                    onClick={redeemAccount}
-                    disabled={!redeemInput.trim()}
+                    onClick={() => send()}
+                    disabled={!draft.trim()}
                   >
-                    兑换
+                    发送
                   </button>
-                </div>
+                )}
               </div>
-            ) : (
-              <>
-                <div className="composer">
-                  <textarea
-                    value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && !event.shiftKey) {
-                        event.preventDefault();
-                        send();
-                      }
-                    }}
-                    placeholder={`给「${data.persona.name}」发消息…`}
-                    rows={1}
-                  />
-                  <div className="composer-row">
-                    <span className="hint">剩余 {credits ?? '—'} 次</span>
-                    {streaming ? (
-                      <button className="danger" onClick={stop}>
-                        停止
-                      </button>
-                    ) : (
-                      <button
-                        className="primary"
-                        onClick={() => send()}
-                        disabled={!draft.trim()}
-                      >
-                        发送
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="composer-note">
-                  每轮消耗 1 次 · 剩余 {credits ?? '—'} 次
-                </div>
-              </>
-            )}
+            </div>
+            <div className="composer-note">
+              {accountToken
+                ? `每轮消耗 1 次 · 剩余 ${credits ?? '—'} 次`
+                : '输入兑换码后开始聊天'}
+            </div>
           </div>
         </main>
       )}

@@ -140,6 +140,9 @@ adb install -r web/android/app/build/outputs/apk/debug/app-debug.apk
 # 生成兑换码
 node scripts/codes.mjs create --credits 500 --count 10
 
+# 换服务器/换 DB 时，把码导入生产库
+node scripts/codes.mjs import --file release/codes-3000.txt --credits 3000
+
 # 启动 gateway（本地）
 node server/gateway.mjs
 

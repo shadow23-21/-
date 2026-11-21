@@ -77,6 +77,21 @@ export function createCodes(db, credits = 500, count = 1) {
   return created;
 }
 
+export function importCodes(db, codes, credits = 500) {
+  const insert = db.prepare(
+    'INSERT OR IGNORE INTO codes (code, credits, created_at) VALUES (?, ?, ?)',
+  );
+  let inserted = 0;
+  const stamp = now();
+  for (const raw of codes) {
+    const code = normalizeCode(raw);
+    if (!code) continue;
+    const result = insert.run(code, Math.max(1, Number(credits) || 1), stamp);
+    if (result.changes > 0) inserted += 1;
+  }
+  return inserted;
+}
+
 export function redeemCode(db, rawCode, existingAccountId = null) {
   const code = normalizeCode(rawCode);
   if (!code) return null;

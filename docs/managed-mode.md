@@ -34,6 +34,9 @@ npm.cmd run build
 # 生成 20 个 500 次的码到文件
 node scripts/codes.mjs create --credits 500 --count 20 --out codes-500.txt
 
+# 把本地生成的码导入生产 DB（换服务器/换 DB 时用）
+node scripts/codes.mjs import --file release/codes-3000.txt --credits 3000
+
 # 查看统计
 node scripts/codes.mjs stats
 

@@ -10,6 +10,7 @@ import {
   consumeCredit,
   createCodes,
   getAccount,
+  importCodes,
   openBilling,
   redeemCode,
   refundCredit,
@@ -56,6 +57,27 @@ test('redeem, consume, refund and stats', () => {
       codes: 2,
       used: 2,
     });
+  } finally {
+    db.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('importCodes imports a portable code list', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'whale-billing-import-'));
+  const db = openBilling(path.join(dir, 'billing.db'));
+
+  try {
+    const inserted = importCodes(
+      db,
+      ['WHALE-AAAA-BBBB-CCCC', 'whale-dddd-eeee-ffff', ''],
+      3000,
+    );
+    assert.equal(inserted, 2);
+    const redeemed = redeemCode(db, 'WHALE-AAAA-BBBB-CCCC');
+    assert.equal(redeemed.credits, 3000);
+    assert.equal(redeemCode(db, 'WHALE-DDDD-EEEE-FFFF').credits, 3000);
+    assert.equal(importCodes(db, ['WHALE-AAAA-BBBB-CCCC'], 3000), 0);
   } finally {
     db.close();
     fs.rmSync(dir, { recursive: true, force: true });

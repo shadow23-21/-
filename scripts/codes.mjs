@@ -6,6 +6,7 @@ import {
   addCreditsByToken,
   billingStats,
   createCodes,
+  importCodes,
   listCodes,
   openBilling,
 } from '../server/billing.mjs';
@@ -34,6 +35,17 @@ try {
       console.log(codes.join('\n'));
     }
     console.log(`credits per code: ${credits}`);
+  } else if (command === 'import') {
+    const file = arg('file', '');
+    const credits = Number(arg('credits', 500));
+    if (!file) throw new Error('usage: node scripts/codes.mjs import --file codes.txt --credits 3000');
+    const codes = fs
+      .readFileSync(file, 'utf8')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const inserted = importCodes(db, codes, credits);
+    console.log(`imported ${inserted}/${codes.length} codes`);
   } else if (command === 'stats') {
     console.log(JSON.stringify(billingStats(db), null, 2));
   } else if (command === 'list') {
@@ -48,6 +60,7 @@ try {
   } else {
     console.log(`commands:
   create --credits 500 --count 20 [--out codes.txt]
+  import --file codes.txt --credits 3000
   stats
   list [--limit 50]
   add --token whale_... --credits 100`);

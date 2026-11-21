@@ -31,6 +31,26 @@ try {
 
   await page.goto(URL, { waitUntil: 'networkidle0' });
   await page.waitForSelector('.topbar');
+  await page.waitForSelector('.composer textarea');
+
+  await page.type('.composer textarea', 'hello');
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '发送')
+      ?.click();
+  });
+  await page.waitForFunction(() => document.body.innerText.includes('额度已用完'));
+  fs.mkdirSync(OUT, { recursive: true });
+  await page.screenshot({ path: path.join(OUT, 'quota-banner.png') });
+  console.log('quota banner: ok');
+  await page.$eval('.composer textarea', (textarea) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      'value',
+    ).set;
+    setter.call(textarea, '');
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  });
 
   await page.evaluate(() => {
     [...document.querySelectorAll('button')]
