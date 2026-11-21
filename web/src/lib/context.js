@@ -78,7 +78,16 @@ export function estimateCostCNY(inputTokens, outputTokens = 300) {
   );
 }
 
-export function buildContext({ bible, events, messages, userText, maxRecent = 8 }) {
+export function buildContext({
+  bible,
+  events,
+  messages,
+  userText,
+  maxRecent = 8,
+  retrievalLimit = 6,
+  memoryLimit = 8,
+  estimatedOutputTokens = 300,
+}) {
   const persona = bible.persona;
   const relationship = bible.relationship;
   const userName =
@@ -114,8 +123,11 @@ export function buildContext({ bible, events, messages, userText, maxRecent = 8 
     ...(bible.open_threads ?? []).map((thread) => `- ${thread}`),
   ].join('\n');
 
-  const memories = memoryLines(bible, userText, 8);
-  const retrieved = retrieve(events, userText, { excludeLast: 8, limit: 6 });
+  const memories = memoryLines(bible, userText, memoryLimit);
+  const retrieved = retrieve(events, userText, {
+    excludeLast: maxRecent,
+    limit: retrievalLimit,
+  });
 
   const memoryBlock = [
     '【长期记忆】',
@@ -153,6 +165,7 @@ export function buildContext({ bible, events, messages, userText, maxRecent = 8 
     retrieved,
     memories,
     estimatedInputTokens,
-    estimatedCostCNY: estimateCostCNY(estimatedInputTokens),
+    estimatedCostCNY: estimateCostCNY(estimatedInputTokens, estimatedOutputTokens),
+    options: { maxRecent, retrievalLimit, memoryLimit, estimatedOutputTokens },
   };
 }

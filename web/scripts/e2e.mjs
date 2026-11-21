@@ -73,6 +73,33 @@ try {
   );
   console.log('chat reply:', reply.slice(0, 120));
   console.log('chat: ok');
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '记忆')
+      ?.click();
+  });
+  await page.waitForSelector('.page-card');
+  await page.screenshot({ path: '../out/web-demo/memory.png' });
+  console.log('memory page: ok');
+
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '设置')
+      ?.click();
+  });
+  await page.waitForSelector('.field-grid');
+  await page.screenshot({ path: '../out/web-demo/settings.png' });
+  console.log('settings page: ok');
+
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForSelector('.message');
+  const restoredCount = await page.$$eval('.message', (nodes) => nodes.length);
+  const restoredHasQuestion = await page.evaluate(() =>
+    document.body.innerText.includes('你还记得那把伞吗'),
+  );
+  console.log('persistence:', restoredCount, restoredHasQuestion);
+  await page.screenshot({ path: '../out/web-demo/restored.png' });
 } finally {
   await browser.close();
 }

@@ -5,6 +5,19 @@ import { API_BASE } from './lib/config.js';
 import { importFile } from './lib/import-client.js';
 import { clearSession, loadSession, saveSession } from './lib/storage.js';
 
+const DEFAULT_SETTINGS = {
+  provider: 'deepseek',
+  model: 'deepseek-flash',
+  apiKey: '',
+  useServerKey: true,
+  remember: false,
+  maxRecent: 6,
+  retrievalLimit: 4,
+  memoryLimit: 6,
+  maxOutputTokens: 500,
+  temperature: 0.9,
+};
+
 const uid = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
@@ -22,27 +35,29 @@ const timeLabel = (iso) => {
   });
 };
 
+const firstChar = (name) => String(name || '?').slice(0, 1);
+
 const loadSettings = () => {
   try {
-    return JSON.parse(localStorage.getItem('whale-settings') || '{}');
+    const stored = JSON.parse(localStorage.getItem('whale-settings') || '{}');
+    return { ...DEFAULT_SETTINGS, ...stored };
   } catch {
-    return {};
+    return { ...DEFAULT_SETTINGS };
   }
 };
 
 export default function App() {
   const [data, setData] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [events, setEvents] = useState([]);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [context, setContext] = useState(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [view, setView] = useState('chat');
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
-  const [memoryOpen, setMemoryOpen] = useState(false);
-  const [events, setEvents] = useState([]);
   const [source, setSource] = useState('demo');
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState('');
@@ -50,7 +65,6 @@ export default function App() {
   const abortRef = useRef(null);
   const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
-  const listRef = useRef(null);
 
   const config = useMemo(
     () => ({
@@ -64,6 +78,17 @@ export default function App() {
     [settings],
   );
 
+  const chatOptions = useMemo(
+    () => ({
+      maxRecent: Number(settings.maxRecent) || 8,
+      retrievalLimit: Number(settings.retrievalLimit) || 6,
+      memoryLimit: Number(settings.memoryLimit) || 8,
+      maxOutputTokens: Number(settings.maxOutputTokens) || 700,
+      temperature: Number(settings.temperature) || 0.9,
+    }),
+    [settings],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -71,6 +96,15 @@ export default function App() {
       try {
         const session = await loadSession();
         if (cancelled) return;
+        if (session?.bible && Array.isArray(session.messages) && session.messages.length > 0) {
+          setData(session.bible);
+          setEvents(Array.isArray(session.events) ? session.events : []);
+          setMessages(session.messages);
+          setSource(session.source ?? 'imported');
+          setImportStatus(`已恢复本地会话：${session.messages.length} 条`);
+          return;
+        }
+
         if (session?.bible && Array.isArray(session.events) && session.events.length > 0) {
           setData(session.bible);
           setEvents(session.events);
@@ -99,24 +133,48 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (view !== 'chat') return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, streaming]);
+  }, [messages.length, messages[messages.length - 1]?.text.length, view]);
 
-  const visibleMessages = showAll ? messages : messages.slice(-60);
+  useEffect(() => {
+    if (!data || messages.length === 0) return;
+    const timer = setTimeout(() => {
+      saveSession({
+        bible: data,
+        events,
+        messages: messages.map(({ pending, ...message }) => message),
+        source,
+        savedAt: new Date().toISOString(),
+      }).catch(() => {});
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [data, events, messages, source]);
+
   const importedCount = messages.filter((message) => message.imported).length;
+  const visibleMessages = showAll ? messages : messages.slice(-60);
 
-  const saveSettings = (next) => {
+  const saveSettingsForm = () => {
+    const next = {
+      ...DEFAULT_SETTINGS,
+      ...draftSettings,
+      maxRecent: Number(draftSettings.maxRecent) || 8,
+      retrievalLimit: Number(draftSettings.retrievalLimit) || 0,
+      memoryLimit: Number(draftSettings.memoryLimit) || 0,
+      maxOutputTokens: Number(draftSettings.maxOutputTokens) || 700,
+      temperature: Number(draftSettings.temperature) || 0.9,
+    };
     setSettings(next);
     const persisted = { ...next };
     if (!next.remember) delete persisted.apiKey;
     localStorage.setItem('whale-settings', JSON.stringify(persisted));
-    setSettingsOpen(false);
     setError('');
+    setView('chat');
   };
 
   const openSettings = () => {
     setDraftSettings(settings);
-    setSettingsOpen(true);
+    setView('settings');
   };
 
   const handleFile = async (file) => {
@@ -139,6 +197,7 @@ export default function App() {
         importedAt: new Date().toISOString(),
       });
       setImportStatus(`导入完成：${selected.length} 条主线`);
+      setView('chat');
     } catch (importError) {
       setError(`导入失败：${importError.message}`);
       setImportStatus('');
@@ -152,9 +211,7 @@ export default function App() {
     window.location.reload();
   };
 
-  const stop = () => {
-    abortRef.current?.abort();
-  };
+  const stop = () => abortRef.current?.abort();
 
   const send = async (textArg) => {
     const text = String(textArg ?? draft).trim();
@@ -168,16 +225,21 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
 
-    // Build context from the messages *before* this user message, then append it.
     const ctx = buildContext({
       bible: data,
       events,
       messages,
       userText: text,
+      maxRecent: chatOptions.maxRecent,
+      retrievalLimit: chatOptions.retrievalLimit,
+      memoryLimit: chatOptions.memoryLimit,
+      estimatedOutputTokens: chatOptions.maxOutputTokens,
     });
     setContext(ctx);
 
     const assistantId = uid();
+    const assistantCreatedAt = new Date().toISOString();
+    let assistantText = '';
     setMessages((previous) => [
       ...previous,
       userMessage,
@@ -186,7 +248,7 @@ export default function App() {
         role: 'assistant',
         speaker: data.persona.name,
         text: '',
-        createdAt: new Date().toISOString(),
+        createdAt: assistantCreatedAt,
         pending: true,
       },
     ]);
@@ -206,8 +268,8 @@ export default function App() {
           model: config.model,
           apiKey: config.useServerKey ? undefined : config.apiKey,
           messages: ctx.messages,
-          temperature: 0.9,
-          maxTokens: 800,
+          temperature: chatOptions.temperature,
+          maxTokens: chatOptions.maxOutputTokens,
         }),
       });
 
@@ -237,6 +299,7 @@ export default function App() {
             const json = JSON.parse(payload);
             const delta = json.choices?.[0]?.delta?.content ?? '';
             if (delta) {
+              assistantText += delta;
               setMessages((previous) =>
                 previous.map((message) =>
                   message.id === assistantId
@@ -268,6 +331,26 @@ export default function App() {
         ),
       );
     } finally {
+      const finalMessages = assistantText
+        ? [
+            ...messages,
+            userMessage,
+            {
+              id: assistantId,
+              role: 'assistant',
+              speaker: data.persona.name,
+              text: assistantText,
+              createdAt: assistantCreatedAt,
+            },
+          ]
+        : [...messages, userMessage];
+      await saveSession({
+        bible: data,
+        events,
+        messages: finalMessages,
+        source,
+        savedAt: new Date().toISOString(),
+      }).catch(() => {});
       setStreaming(false);
       abortRef.current = null;
     }
@@ -286,60 +369,92 @@ export default function App() {
     return (
       <main className="boot-error">
         <h1>whale-memory</h1>
-        <p>正在加载本地 demo 数据…</p>
+        <p>正在加载本地数据…</p>
       </main>
     );
   }
 
+  const headerTitle =
+    view === 'chat' ? data.persona.name : view === 'memory' ? '记忆' : '设置';
+  const headerSub =
+    view === 'chat'
+      ? `${data.memories.length} 条长期记忆 · ${importedCount} 条导入 · ${chatOptions.maxRecent} 轮上下文`
+      : view === 'memory'
+        ? data.title
+        : '模型、省流和成本';
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
-          <div className="eyebrow">WHALE MEMORY · LOCAL MVP</div>
-          <h1>{data.title}</h1>
-          <div className="sub">
-            <span className="persona-dot" />
-            {data.persona.name} · {importedCount} 条导入消息 · 语气样本{' '}
-            {data.style_samples.length} 条
-            <span className="chip">{source === 'imported' ? '已导入' : 'demo'}</span>
-            {importStatus && <span>{importStatus}</span>}
+        <div className="topbar-left">
+          {view !== 'chat' && (
+            <button className="icon-btn" onClick={() => setView('chat')} aria-label="返回">
+              ←
+            </button>
+          )}
+          <div className="avatar">{firstChar(data.persona.name)}</div>
+          <div className="title-block">
+            <h1>{headerTitle}</h1>
+            <div className="sub">{headerSub}</div>
           </div>
         </div>
         <div className="topbar-actions">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,.jsonl,.txt"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = '';
-              handleFile(file);
-            }}
-          />
-          <button className="ghost" onClick={() => setMemoryOpen((value) => !value)}>
-            记忆
-          </button>
-          <button
-            className="ghost"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-          >
-            {importing ? '导入中…' : '导入'}
-          </button>
-          {source === 'imported' && (
-            <button className="ghost small" onClick={resetToDemo}>
-              恢复 demo
-            </button>
+          {view === 'chat' && (
+            <>
+              <button className="ghost" onClick={() => setView('memory')}>
+                记忆
+              </button>
+              <button className="ghost" onClick={openSettings}>
+                设置
+              </button>
+            </>
+          )}
+          {view === 'memory' && (
+            <>
+              <button
+                className="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? '导入中…' : '导入'}
+              </button>
+              {source === 'imported' && (
+                <button className="ghost" onClick={resetToDemo}>
+                  恢复 demo
+                </button>
+              )}
+              <button className="ghost" onClick={openSettings}>
+                设置
+              </button>
+            </>
+          )}
+          {view === 'settings' && (
+            <>
+              <button className="ghost" onClick={() => setView('chat')}>
+                取消
+              </button>
+              <button className="primary" onClick={saveSettingsForm}>
+                保存
+              </button>
+            </>
           )}
           <span className={`status ${streaming ? 'live' : ''}`}>
-            {streaming ? '生成中…' : '本地 · BYOK'}
+            {streaming ? '生成中…' : ''}
           </span>
-          <button className="ghost" onClick={openSettings}>
-            设置
-          </button>
         </div>
       </header>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.jsonl,.txt"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          handleFile(file);
+        }}
+      />
 
       {error && (
         <div className="error-bar">
@@ -350,273 +465,416 @@ export default function App() {
         </div>
       )}
 
-      <main className="layout">
-        <section className="panel chat-panel">
-          <div className="chat-toolbar">
-            <div className="chat-title">
-              <strong>{data.persona.name}</strong>
-              <span>
-                {context
-                  ? `上一轮上下文 ≈ ${context.estimatedInputTokens} tokens · ≈¥${context.estimatedCostCNY.toFixed(3)}`
-                  : '本地记忆已载入'}
-              </span>
-            </div>
+      {view === 'chat' && (
+        <main className="chat-view">
+          <div className="thread-bar">
             <button className="ghost small" onClick={() => setShowAll((value) => !value)}>
               {showAll ? '只看最近 60 条' : `显示全部 ${messages.length} 条`}
             </button>
+            {importStatus && <span className="thread-note">{importStatus}</span>}
           </div>
 
-          <div className="messages" ref={listRef}>
-            {!showAll && messages.length > 60 && (
-              <div className="older-hint">已折叠较早的 {messages.length - 60} 条</div>
-            )}
-            {visibleMessages.map((message) => (
-              <article
-                key={message.id}
-                className={`message ${message.role === 'user' ? 'user' : 'assistant'}`}
-              >
-                <div className="message-meta">
-                  <span>{message.role === 'user' ? '你' : message.speaker || data.persona.name}</span>
-                  <span>{timeLabel(message.createdAt)}</span>
-                  {message.imported && <span className="chip">导入</span>}
-                </div>
-                <div className="message-text">
-                  {message.text}
-                  {message.pending && <span className="cursor">▋</span>}
-                </div>
-              </article>
-            ))}
-            <div ref={bottomRef} />
-          </div>
-
-          {context && (
-            <details className="context-box">
-              <summary>
-                本轮记忆 · {context.memories.length} 条长期记忆 + {context.retrieved.length} 条往事
-                <span className="context-cost">≈ ¥{context.estimatedCostCNY.toFixed(3)}</span>
-              </summary>
-              <div className="context-columns">
-                <div>
-                  <h4>长期记忆</h4>
-                  <ul>
-                    {context.memories.map((memory, index) => (
-                      <li key={`${memory.text}-${index}`}>
-                        <span className="kind">{memory.kind}</span>
-                        {memory.text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4>相关往事</h4>
-                  <ul>
-                    {context.retrieved.map((event) => (
-                      <li key={event.id}>
-                        <span className="kind">
-                          {event.role === 'user' ? '你' : event.speaker || data.persona.name}
-                        </span>
-                        {event.text.slice(0, 140)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </details>
-          )}
-
-          <div className="composer">
-            <textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  send();
-                }
-              }}
-              placeholder={`以「${data.persona.name}」的身份继续聊…（Enter 发送，Shift+Enter 换行）`}
-              rows={3}
-            />
-            <div className="composer-actions">
-              <span className="hint">
-                {config.provider} / {config.model}
-                {config.useServerKey ? ' · 用本地 .env key' : ' · 用自己的 key'}
-              </span>
-              {streaming ? (
-                <button className="danger" onClick={stop}>
-                  停止
-                </button>
-              ) : (
-                <button className="primary" onClick={() => send()} disabled={!draft.trim()}>
-                  发送
-                </button>
+          <div className="chat-scroll">
+            <div className="chat-thread">
+              {!showAll && messages.length > 60 && (
+                <div className="older-hint">已折叠较早的 {messages.length - 60} 条</div>
               )}
+              {visibleMessages.map((message) => (
+                <Message
+                  key={message.id}
+                  message={message}
+                  personaName={data.persona.name}
+                />
+              ))}
+              <div ref={bottomRef} />
             </div>
           </div>
-        </section>
 
-        <aside className={`panel memory-panel ${memoryOpen ? 'open' : ''}`}>
-          <button className="ghost memory-close" onClick={() => setMemoryOpen(false)}>
-            关闭
-          </button>
-          <div className="memory-card">
-            <div className="memory-name">{data.persona.name}</div>
+          <div className="composer-wrap">
+            <div className="composer">
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    send();
+                  }
+                }}
+                placeholder={`给「${data.persona.name}」发消息…`}
+                rows={1}
+              />
+              <div className="composer-row">
+                <span className="hint">
+                  {context
+                    ? `≈ ${context.estimatedInputTokens} tokens · ≈ ¥${context.estimatedCostCNY.toFixed(3)}`
+                    : `${config.provider} / ${config.model}`}
+                </span>
+                {streaming ? (
+                  <button className="danger" onClick={stop}>
+                    停止
+                  </button>
+                ) : (
+                  <button className="primary" onClick={() => send()} disabled={!draft.trim()}>
+                    发送
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="composer-note">
+              记忆 {data.memories.length} 条 · 回顾 {chatOptions.maxRecent} 轮 · 输出 ≤{' '}
+              {chatOptions.maxOutputTokens} tokens
+            </div>
+          </div>
+        </main>
+      )}
+
+      {view === 'memory' && (
+        <MemoryPage data={data} chatOptions={chatOptions} context={context} />
+      )}
+      {view === 'settings' && (
+        <SettingsPage
+          draftSettings={draftSettings}
+          setDraftSettings={setDraftSettings}
+        />
+      )}
+    </div>
+  );
+}
+
+function Message({ message, personaName }) {
+  const isUser = message.role === 'user';
+  return (
+    <article className={`message ${isUser ? 'user' : 'assistant'}`}>
+      <div className="message-meta">
+        <span>{isUser ? '你' : message.speaker || personaName}</span>
+        <span>{timeLabel(message.createdAt)}</span>
+      </div>
+      <div className="message-text">
+        {message.text}
+        {message.pending && <span className="cursor">▋</span>}
+      </div>
+    </article>
+  );
+}
+
+function InjectionSection({ context }) {
+  if (!context) return null;
+  return (
+    <section className="page-card">
+      <h3>
+        上一轮注入
+        <span className="page-badge">
+          ≈ {context.estimatedInputTokens} tokens · ¥{context.estimatedCostCNY.toFixed(3)}
+        </span>
+      </h3>
+      <div className="injection-grid">
+        <div>
+          <h4>长期记忆</h4>
+          <ul className="memory-list">
+            {(context.memories.length > 0 ? context.memories : [{ kind: '无', text: '暂无' }]).map(
+              (memory, index) => (
+                <li key={`${memory.text}-${index}`}>
+                  <span className="kind">{memory.kind}</span>
+                  {memory.text}
+                </li>
+              ),
+            )}
+          </ul>
+        </div>
+        <div>
+          <h4>相关往事</h4>
+          <ul className="memory-list">
+            {(context.retrieved.length > 0
+              ? context.retrieved
+              : [{ id: 'none', role: 'assistant', text: '本轮没有额外检索到往事' }]
+            ).map((event) => (
+              <li key={event.id}>
+                <span className="kind">
+                  {event.role === 'user' ? '你' : event.speaker || '角色'}
+                </span>
+                {event.text.slice(0, 140)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MemoryPage({ data, chatOptions, context }) {
+  const persona = data.persona;
+  const relationship = data.relationship;
+
+  return (
+    <main className="page">
+      <div className="page-inner">
+        <section className="page-hero">
+          <div className="avatar big">{firstChar(persona.name)}</div>
+          <div>
+            <h2>{persona.name}</h2>
+            <p className="page-sub">{data.title}</p>
             <div className="chips">
-              {data.persona.personality.map((trait) => (
+              {persona.personality.map((trait) => (
                 <span className="chip" key={trait}>
                   {trait}
                 </span>
               ))}
             </div>
-            <dl>
-              <dt>阶段</dt>
-              <dd>{data.relationship.stage}</dd>
-              <dt>角色→用户</dt>
-              <dd>{data.relationship.address_terms?.user?.join('、') || '你'}</dd>
-              <dt>用户→角色</dt>
-              <dd>
-                {data.relationship.address_terms?.character?.join('、') ||
-                  data.persona.name}
-              </dd>
-              <dt>说话</dt>
-              <dd>{data.persona.speech_style}</dd>
-            </dl>
           </div>
+        </section>
 
-          <section className="memory-section">
-            <h2>长期记忆</h2>
-            <ul className="memory-list">
-              {data.memories.slice(0, 10).map((memory, index) => (
-                <li key={`${memory.text}-${index}`}>
-                  <span className="kind">{memory.kind}</span>
-                  {memory.text}
-                </li>
-              ))}
-            </ul>
-          </section>
+        <InjectionSection context={context} />
 
-          <section className="memory-section">
-            <h2>未结束的线</h2>
-            <ul className="memory-list">
-              {(data.open_threads.length > 0 ? data.open_threads : ['暂无']).map(
-                (thread, index) => (
-                  <li key={`${thread}-${index}`}>{thread}</li>
-                ),
-              )}
-            </ul>
-          </section>
+        <section className="page-card">
+          <h3>人设</h3>
+          <dl>
+            <dt>别名</dt>
+            <dd>{persona.aliases.join('、') || '未知'}</dd>
+            <dt>年龄</dt>
+            <dd>{persona.age}</dd>
+            <dt>外貌</dt>
+            <dd>{persona.appearance}</dd>
+            <dt>说话</dt>
+            <dd>{persona.speech_style}</dd>
+            <dt>背景</dt>
+            <dd>{persona.background}</dd>
+            <dt>习惯</dt>
+            <dd>{persona.habits.join('、') || '未知'}</dd>
+          </dl>
+        </section>
 
-          <section className="memory-section">
-            <h2>时间线（最近）</h2>
-            <ul className="memory-list">
-              {data.timeline.slice(-8).map((item, index) => (
-                <li key={`${item.event}-${index}`}>
-                  <span className="kind">{item.when}</span>
-                  {item.event}
-                </li>
-              ))}
-            </ul>
-          </section>
-        </aside>
-      </main>
+        <section className="page-card">
+          <h3>关系</h3>
+          <dl>
+            <dt>阶段</dt>
+            <dd>{relationship.stage}</dd>
+            <dt>用户</dt>
+            <dd>{relationship.user_name}</dd>
+            <dt>定位</dt>
+            <dd>{relationship.character_role}</dd>
+            <dt>角色→用户</dt>
+            <dd>{relationship.address_terms.user.join('、') || '你'}</dd>
+            <dt>用户→角色</dt>
+            <dd>{relationship.address_terms.character.join('、') || persona.name}</dd>
+          </dl>
+          <h4>边界</h4>
+          <ul className="memory-list">
+            {(relationship.boundaries.length > 0
+              ? relationship.boundaries
+              : ['暂无']
+            ).map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
+            ))}
+          </ul>
+          <h4>未解决</h4>
+          <ul className="memory-list">
+            {(relationship.tensions.length > 0 ? relationship.tensions : ['暂无']).map(
+              (item, index) => (
+                <li key={`${item}-${index}`}>{item}</li>
+              ),
+            )}
+          </ul>
+        </section>
 
-      {settingsOpen && (
-        <div className="modal-backdrop" onClick={() => setSettingsOpen(false)}>
-          <div className="modal" onClick={(event) => event.stopPropagation()}>
-            <h2>模型设置</h2>
-            <p className="modal-note">
-              本地演示默认走服务器 <code>.env</code> 里的 key；也可以填自己的 key。
-              key 只存在浏览器 localStorage（勾选“记住”时）。
-            </p>
+        <section className="page-card">
+          <h3>
+            长期记忆 <span className="page-badge">{data.memories.length}</span>
+          </h3>
+          <ul className="memory-list">
+            {data.memories.map((memory, index) => (
+              <li key={`${memory.text}-${index}`}>
+                <span className="kind">{memory.kind}</span>
+                {memory.text}
+                <span className="importance">{memory.importance.toFixed(2)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-            <label>
-              供应商
-              <select
-                value={draftSettings.provider || 'deepseek'}
-                onChange={(event) =>
-                  setDraftSettings((previous) => ({
-                    ...previous,
-                    provider: event.target.value,
-                    model:
-                      event.target.value === 'zhipu'
-                        ? 'glm-4.7-flash'
-                        : 'deepseek-flash',
-                  }))
-                }
-              >
-                <option value="deepseek">DeepSeek</option>
-                <option value="zhipu">智谱 BigModel</option>
-              </select>
-            </label>
+        <section className="page-card">
+          <h3>时间线</h3>
+          <ul className="memory-list">
+            {data.timeline.map((item, index) => (
+              <li key={`${item.event}-${index}`}>
+                <span className="kind">{item.when}</span>
+                {item.event}
+              </li>
+            ))}
+          </ul>
+        </section>
 
-            <label>
-              模型
+        <section className="page-card">
+          <h3>语气样本</h3>
+          {data.style_samples.map((sample, index) => (
+            <blockquote key={`${sample}-${index}`}>{sample}</blockquote>
+          ))}
+        </section>
+
+        <section className="page-card">
+          <h3>未结束的线</h3>
+          <ul className="memory-list">
+            {(data.open_threads.length > 0 ? data.open_threads : ['暂无']).map(
+              (thread, index) => (
+                <li key={`${thread}-${index}`}>{thread}</li>
+              ),
+            )}
+          </ul>
+        </section>
+
+        <p className="page-note">
+          每轮只注入：长期记忆最多 {chatOptions.memoryLimit} 条 + 相关往事最多{' '}
+          {chatOptions.retrievalLimit} 条 + 最近 {chatOptions.maxRecent} 轮。
+        </p>
+      </div>
+    </main>
+  );
+}
+
+function SettingsPage({ draftSettings, setDraftSettings }) {
+  const update = (key, value) =>
+    setDraftSettings((previous) => ({ ...previous, [key]: value }));
+
+  return (
+    <main className="page">
+      <div className="page-inner">
+        <section className="page-card">
+          <h3>模型</h3>
+          <label className="field">
+            供应商
+            <select
+              value={draftSettings.provider || 'deepseek'}
+              onChange={(event) => {
+                const provider = event.target.value;
+                setDraftSettings((previous) => ({
+                  ...previous,
+                  provider,
+                  model: provider === 'zhipu' ? 'glm-4.7-flash' : 'deepseek-flash',
+                }));
+              }}
+            >
+              <option value="deepseek">DeepSeek</option>
+              <option value="zhipu">智谱 BigModel</option>
+            </select>
+          </label>
+          <label className="field">
+            模型
+            <input
+              value={draftSettings.model || ''}
+              onChange={(event) => update('model', event.target.value)}
+            />
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={draftSettings.useServerKey !== false}
+              onChange={(event) => update('useServerKey', event.target.checked)}
+            />
+            使用服务器 .env 里的 key（仅本地）
+          </label>
+          <label className="field">
+            API key
+            <input
+              type="password"
+              placeholder="sk-... / id.secret"
+              value={draftSettings.apiKey || ''}
+              disabled={draftSettings.useServerKey !== false}
+              onChange={(event) => update('apiKey', event.target.value)}
+            />
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={Boolean(draftSettings.remember)}
+              onChange={(event) => update('remember', event.target.checked)}
+            />
+            记住 key（只存本机 localStorage）
+          </label>
+        </section>
+
+        <section className="page-card">
+          <h3>省流</h3>
+          <p className="page-sub">
+            默认就是低成本配置：少带历史、少带记忆、限制输出。DeepSeek 关闭 thinking 后不产生
+            reasoning token。
+          </p>
+          <button
+            className="ghost"
+            onClick={() =>
+              setDraftSettings((previous) => ({
+                ...previous,
+                maxRecent: 6,
+                retrievalLimit: 4,
+                memoryLimit: 6,
+                maxOutputTokens: 500,
+              }))
+            }
+          >
+            套用省流预设
+          </button>
+          <div className="field-grid">
+            <label className="field">
+              最近对话轮数
               <input
-                value={draftSettings.model || config.model}
-                onChange={(event) =>
-                  setDraftSettings((previous) => ({
-                    ...previous,
-                    model: event.target.value,
-                  }))
-                }
+                type="number"
+                min="2"
+                max="20"
+                value={draftSettings.maxRecent ?? 8}
+                onChange={(event) => update('maxRecent', event.target.value)}
               />
             </label>
-
-            <label className="check">
+            <label className="field">
+              相关往事条数
               <input
-                type="checkbox"
-                checked={draftSettings.useServerKey !== false}
-                onChange={(event) =>
-                  setDraftSettings((previous) => ({
-                    ...previous,
-                    useServerKey: event.target.checked,
-                  }))
-                }
-              />
-              使用服务器 .env 里的 key（仅本地）
-            </label>
-
-            <label>
-              API key
-              <input
-                type="password"
-                placeholder="sk-... / id.secret"
-                value={draftSettings.apiKey || ''}
-                onChange={(event) =>
-                  setDraftSettings((previous) => ({
-                    ...previous,
-                    apiKey: event.target.value,
-                  }))
-                }
-                disabled={draftSettings.useServerKey !== false}
+                type="number"
+                min="0"
+                max="12"
+                value={draftSettings.retrievalLimit ?? 6}
+                onChange={(event) => update('retrievalLimit', event.target.value)}
               />
             </label>
-
-            <label className="check">
+            <label className="field">
+              长期记忆条数
               <input
-                type="checkbox"
-                checked={Boolean(draftSettings.remember)}
-                onChange={(event) =>
-                  setDraftSettings((previous) => ({
-                    ...previous,
-                    remember: event.target.checked,
-                  }))
-                }
+                type="number"
+                min="0"
+                max="20"
+                value={draftSettings.memoryLimit ?? 8}
+                onChange={(event) => update('memoryLimit', event.target.value)}
               />
-              记住 key（只存本机 localStorage）
             </label>
-
-            <div className="modal-actions">
-              <button className="ghost" onClick={() => setSettingsOpen(false)}>
-                取消
-              </button>
-              <button className="primary" onClick={() => saveSettings(draftSettings)}>
-                保存
-              </button>
-            </div>
+            <label className="field">
+              最大输出 tokens
+              <input
+                type="number"
+                min="200"
+                max="2000"
+                value={draftSettings.maxOutputTokens ?? 700}
+                onChange={(event) => update('maxOutputTokens', event.target.value)}
+              />
+            </label>
+            <label className="field">
+              温度
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="1.5"
+                value={draftSettings.temperature ?? 0.9}
+                onChange={(event) => update('temperature', event.target.value)}
+              />
+            </label>
           </div>
-        </div>
-      )}
-    </div>
+        </section>
+
+        <section className="page-card">
+          <h3>成本</h3>
+          <p className="page-sub">
+            估算按 DeepSeek V4.1 Flash 空闲价：输入 ¥1.56/M，输出 ¥4.69/M。实际以账单为准。
+          </p>
+        </section>
+      </div>
+    </main>
   );
 }

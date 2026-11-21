@@ -25,8 +25,10 @@
 - [x] 浏览器导入 + IndexedDB 持久化 + `/api/extract` 生成 story bible
 - [x] 浏览器 E2E：上传 fixture → 导入 → 聊天（`web/scripts/e2e.mjs`）
 - [x] Android 工程 + debug APK 构建通过（`web/android`）
-- [x] Redmi M332BF 安装/启动验证；移动端单列布局 + 记忆抽屉
-- [ ] 手机上的自动输入（MIUI 仍限制 `adb shell input`，手动打字可用）
+- [x] Redmi M332BF 安装/启动验证；主界面纯聊天，记忆/设置独立页面
+- [x] 默认省流：6 轮上下文 / 4 条往事 / 6 条长期记忆 / 输出 ≤500 tokens
+- [x] 聊天记录持久化到 IndexedDB（刷新/重启恢复导入 + 后续对话）
+- [x] 手机端 ADB 输入/发送 + force-stop 重启恢复验证（242 条会话）
 
 ## 目录
 
@@ -81,9 +83,11 @@ node server/gateway.mjs
 - 请求统一带 `thinking: { type: "disabled" }`：DeepSeek V4 和 GLM 默认思考，不关会只出 reasoning、正文为空。
 - 上下文 = 人设 + story bible + 检索到的往事 + 最近 8 轮；页面会显示估算 tokens / 成本。
 - 设置面板可切 DeepSeek / 智谱、改模型、填 key；key 只在本机 localStorage（勾选“记住”时）。
-- 「导入」按钮支持 `.json` / `.jsonl` / `.txt`；DeepSeek 官方 zip 先解压，选里面的 `conversation.json`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。
+- 主界面是纯聊天：只有角色名、消息流和输入框；「记忆」和「设置」是独立页面。
+- 「导入」在「记忆」页；支持 `.json` / `.jsonl` / `.txt`，DeepSeek 官方 zip 先解压，选里面的 `conversation.json`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。
 - 抽取默认走 DeepSeek `deepseek-flash`，智谱 `glm-4.7-flash` 作为 fallback；智谱 429 时自动切换。
-- 浏览器 E2E：`cd web && node scripts/e2e.mjs`（需要 gateway 已启动 + Edge）。
+- 默认省流：最近 6 轮 + 最多 4 条往事 + 6 条长期记忆 + 输出 ≤500 tokens；输入框上方显示本轮估算成本。
+- 浏览器 E2E：`cd web && node scripts/e2e.mjs`（需要 gateway 已启动 + Edge；会验证导入、聊天、记忆页、设置页）。
 
 ## Android
 
