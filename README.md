@@ -21,7 +21,7 @@
 - [x] SQLite schema + 导入入库（`whale.db`，含 FTS5 索引）
 - [x] story bible 抽取（GLM-4.7-Flash，关闭思考；失败可降级确定性摘要）
 - [x] 本地 HTML demo（`index.html`，可直接打开）
-- [ ] PWA 聊天 + BYOK
+- [x] PWA 聊天 + BYOK + 检索上下文（本地 gateway，流式输出）
 - [ ] Android 包
 
 ## 目录
@@ -55,6 +55,28 @@ node scripts/build-memory.mjs fixtures/deepseek-raw.json \
 - `index.html`：本地静态 demo（聊天 + 记忆面板）
 
 抽取用 `glm-4.7-flash`，请求里带 `thinking: { type: "disabled" }`，否则它会把 token 全花在思考上、正文为空。
+
+## 本地 Web MVP
+
+```bash
+# 1. 生成 demo 数据（来自 out/official-demo4）
+node scripts/export-web-data.mjs out/official-demo4 web/public/demo-data.json
+
+# 2. 装依赖 + 构建
+cd web
+npm.cmd install
+npm.cmd run build
+cd ..
+
+# 3. 启动本地 gateway
+node server/gateway.mjs
+# 打开 http://127.0.0.1:8787
+```
+
+- gateway 只监听 `127.0.0.1`，`/api/chat` 透传 DeepSeek / 智谱；默认用 `.env` 的 key，也能在设置里填自己的 key。
+- 请求统一带 `thinking: { type: "disabled" }`：DeepSeek V4 和 GLM 默认思考，不关会只出 reasoning、正文为空。
+- 上下文 = 人设 + story bible + 检索到的往事 + 最近 8 轮；页面会显示估算 tokens / 成本。
+- 设置面板可切 DeepSeek / 智谱、改模型、填 key；key 只在本机 localStorage（勾选“记住”时）。
 
 ## 计划技术栈
 

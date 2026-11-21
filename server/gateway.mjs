@@ -1,0 +1,207 @@
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const DIST = path.join(ROOT, 'web', 'dist');
+const HOST = '127.0.0.1';
+const PORT = Number(process.env.PORT || 8787);
+
+const MIME = new Map([
+  ['.html', 'text/html; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'],
+  ['.css', 'text/css; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.svg', 'image/svg+xml'],
+  ['.png', 'image/png'],
+  ['.jpg', 'image/jpeg'],
+  ['.webp', 'image/webp'],
+  ['.ico', 'image/x-icon'],
+]);
+
+function loadEnv(file) {
+  const out = {};
+  if (!fs.existsSync(file)) return out;
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const index = trimmed.indexOf('=');
+    if (index === -1) continue;
+    out[trimmed.slice(0, index)] = trimmed.slice(index + 1);
+  }
+  return out;
+}
+
+const env = loadEnv(path.join(ROOT, '.env'));
+
+function sendJson(response, status, payload) {
+  const body = JSON.stringify(payload);
+  response.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': Buffer.byteLength(body),
+  });
+  response.end(body);
+}
+
+async function readBody(request) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 2 * 1024 * 1024) throw new Error('Request body too large');
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+function serveStatic(request, response) {
+  const url = new URL(request.url, `http://${request.headers.host ?? 'localhost'}`);
+  const pathname = decodeURIComponent(url.pathname);
+  const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  const resolved = path.resolve(DIST, relative);
+
+  if (!resolved.startsWith(`${DIST}${path.sep}`) && resolved !== DIST) {
+    response.writeHead(403);
+    response.end('Forbidden');
+    return;
+  }
+
+  let file = resolved;
+  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    file = path.join(DIST, 'index.html');
+  }
+
+  if (!fs.existsSync(file)) {
+    response.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' });
+    response.end('web/dist 还没构建：先运行 cd web && npm run build');
+    return;
+  }
+
+  const extension = path.extname(file);
+  response.writeHead(200, {
+    'Content-Type': MIME.get(extension) ?? 'application/octet-stream',
+    'Cache-Control': extension === '.html' ? 'no-cache' : 'public, max-age=3600',
+  });
+  fs.createReadStream(file).pipe(response);
+}
+
+async function handleChat(request, response) {
+  let payload;
+  try {
+    payload = JSON.parse(await readBody(request));
+  } catch (error) {
+    sendJson(response, 400, { error: `Invalid JSON: ${error.message}` });
+    return;
+  }
+
+  const provider = payload.provider === 'zhipu' ? 'zhipu' : 'deepseek';
+  const apiKey =
+    payload.apiKey ||
+    (provider === 'zhipu' ? env.ZHIPU_API_KEY : env.DEEPSEEK_API_KEY);
+  if (!apiKey) {
+    sendJson(response, 400, {
+      error: `Missing API key for ${provider}. Put it in .env or the settings panel.`,
+    });
+    return;
+  }
+
+  const model =
+    payload.model || (provider === 'zhipu' ? 'glm-4.7-flash' : 'deepseek-flash');
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+  const upstreamUrl =
+    provider === 'zhipu'
+      ? 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
+      : 'https://api.deepseek.com/chat/completions';
+
+  const upstreamBody = {
+    model,
+    messages,
+    stream: true,
+    temperature: Number(payload.temperature ?? 0.9),
+    max_tokens: Number(payload.maxTokens ?? 800),
+  };
+  // Both DeepSeek V4+ and GLM default to thinking mode. For roleplay chat we
+  // want the final answer, not a long reasoning trace.
+  upstreamBody.thinking = { type: 'disabled' };
+
+  let upstream;
+  try {
+    upstream = await fetch(upstreamUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(upstreamBody),
+    });
+  } catch (error) {
+    sendJson(response, 502, { error: `Upstream fetch failed: ${error.message}` });
+    return;
+  }
+
+  if (!upstream.ok) {
+    const detail = await upstream.text();
+    sendJson(response, upstream.status, { error: detail.slice(0, 1000) });
+    return;
+  }
+
+  response.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  response.flushHeaders?.();
+
+  const reader = upstream.body.getReader();
+  request.on('close', () => {
+    reader.cancel().catch(() => {});
+  });
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      response.write(Buffer.from(value));
+    }
+  } catch {
+    // Client disconnected or upstream aborted.
+  } finally {
+    response.end();
+  }
+}
+
+const server = http.createServer(async (request, response) => {
+  const url = new URL(request.url, `http://${request.headers.host ?? 'localhost'}`);
+
+  if (url.pathname === '/api/health') {
+    sendJson(response, 200, {
+      ok: true,
+      dist: fs.existsSync(DIST),
+      provider: env.DEEPSEEK_API_KEY ? 'deepseek' : null,
+    });
+    return;
+  }
+
+  if (url.pathname === '/api/chat') {
+    if (request.method !== 'POST') {
+      sendJson(response, 405, { error: 'POST required' });
+      return;
+    }
+    await handleChat(request, response);
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    sendJson(response, 404, { error: 'Not found' });
+    return;
+  }
+
+  serveStatic(request, response);
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`whale-memory gateway: http://${HOST}:${PORT}`);
+  console.log(`static: ${DIST}`);
+});

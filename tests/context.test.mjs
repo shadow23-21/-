@@ -1,0 +1,92 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  buildContext,
+  estimateCostCNY,
+  memoryLines,
+  retrieve,
+  tokenize,
+} from '../web/src/lib/context.js';
+
+const bible = {
+  title: '和沈砚的一百二十天',
+  persona: {
+    name: '沈砚',
+    aliases: [],
+    personality: ['克制'],
+    speech_style: '短句',
+    background: '医生',
+    habits: [],
+    appearance: '白大褂',
+  },
+  relationship: {
+    stage: '暧昧',
+    user_name: '你',
+    character_role: '恋人',
+    address_terms: { user: ['你'], character: ['沈砚'] },
+    boundaries: ['别提顾青'],
+    tensions: [],
+  },
+  memories: [
+    { kind: '约定', text: '周末去看海', importance: 0.9 },
+    { kind: '喜好', text: '喜欢吃栗子蛋糕', importance: 0.7 },
+  ],
+  style_samples: ['带了。在柜子里。'],
+  open_threads: ['周末看海'],
+};
+
+const events = Array.from({ length: 12 }, (_, index) => ({
+  id: String(index + 1),
+  role: index % 2 === 0 ? 'user' : 'assistant',
+  speaker: index % 2 === 0 ? null : '沈砚',
+  text:
+    index === 0
+      ? '今天下雨了，你带伞没有？'
+      : index === 1
+        ? '带了，在柜子里。'
+        : `第 ${index + 1} 条普通对话。`,
+}));
+
+test('tokenize handles Chinese bigrams and single characters', () => {
+  assert.ok(tokenize('雨伞').includes('雨伞'));
+  assert.ok(tokenize('伞').includes('伞'));
+  assert.ok(tokenize('Magic the Gathering').includes('magic'));
+});
+
+test('retrieve finds the event matching the query', () => {
+  const results = retrieve(events, '伞', { excludeLast: 0 });
+  assert.ok(results.some((event) => event.text.includes('伞')));
+});
+
+test('memoryLines prefers matching memory', () => {
+  const results = memoryLines(bible, '蛋糕');
+  assert.equal(results[0].text, '喜欢吃栗子蛋糕');
+});
+
+test('buildContext includes persona, memory and exactly one user message', () => {
+  const context = buildContext({
+    bible,
+    events,
+    messages: [
+      { role: 'assistant', text: '走廊尽头的灯闪了一下。' },
+      { role: 'user', text: '你带伞没有？' },
+    ],
+    userText: '周末还去看海吗？',
+  });
+
+  assert.match(context.messages[0].content, /沈砚/);
+  assert.match(context.messages[1].content, /看海/);
+  assert.equal(context.messages.at(-1).content, '周末还去看海吗？');
+  assert.equal(
+    context.messages.filter(
+      (message) => message.role === 'user' && message.content === '周末还去看海吗？',
+    ).length,
+    1,
+  );
+  assert.ok(context.estimatedInputTokens > 0);
+});
+
+test('cost estimate is positive', () => {
+  assert.ok(estimateCostCNY(10_000) > 0);
+});
