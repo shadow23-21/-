@@ -34,6 +34,8 @@
 - [x] 消息「记住」+ 记忆页编辑/删除；手动记忆会进后续上下文
 - [x] 检索改为 BM25（IDF + 长度归一化 + 重要性兜底）
 - [x] App 名称「鲸忆」+ 自定义图标
+- [x] 角色列表排序（最近 / 名字 / 记忆数）
+- [x] PWA：manifest + 安装到桌面 + service worker 离线壳
 - [x] 手机端 ADB 输入/发送 + force-stop 重启恢复验证（242 条会话）
 
 ## 目录
@@ -90,7 +92,8 @@ node server/gateway.mjs
 - 上下文 = 人设 + story bible + 检索到的往事 + 最近 6 轮；页面会显示估算 tokens / 成本。
 - 设置面板可切 DeepSeek / 智谱、改模型、填 key；key 只在本机 localStorage（勾选“记住”时）。
 - 主界面是纯聊天：只有角色名、消息流和输入框；「记忆」和「设置」是独立页面；左上角 ☰ 进入角色列表。
-- 角色列表：每个角色独立的 story bible / 消息 / 记忆；支持搜索、改名；「导入新角色」追加，不覆盖当前角色。
+- 角色列表：每个角色独立的 story bible / 消息 / 记忆；支持搜索、排序（最近/名字/记忆数）、改名；「导入新角色」追加，不覆盖当前角色。
+- 支持安装到桌面：manifest + standalone + service worker；Chrome/Edge 角色页会出现「安装」，iOS Safari 用分享 → 添加到主屏幕。
 - 每条消息右上角「记住」：把这句话写进长期记忆，下一轮就会注入；记忆页可编辑 kind/文本/重要度，也可逐条删除。
 - App 名「鲸忆」，Android 图标是蓝紫渐变 + 鲸字。
 - 「导入新角色」在角色列表；支持 **DeepSeek 官方 `.zip` 直接导入**（自动找 `conversation.json`），也支持 `.json` / `.jsonl` / `.txt`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。

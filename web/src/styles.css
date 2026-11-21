@@ -501,10 +501,17 @@ select {
   margin-top: 0;
 }
 
-.character-search {
-  width: 100%;
-  max-width: 420px;
+.character-toolbar {
+  display: flex;
+  max-width: 620px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
+}
+
+.character-search {
+  min-width: 200px;
+  flex: 1;
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -513,7 +520,17 @@ select {
   outline: none;
 }
 
-.character-search:focus {
+.character-sort {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0d1528;
+  color: var(--text);
+  outline: none;
+}
+
+.character-search:focus,
+.character-sort:focus {
   border-color: var(--accent);
 }
 

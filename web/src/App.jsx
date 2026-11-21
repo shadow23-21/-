@@ -102,10 +102,12 @@ export default function App() {
   const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
   const [characterQuery, setCharacterQuery] = useState('');
+  const [characterSort, setCharacterSort] = useState('recent');
   const [newCharacter, setNewCharacter] = useState(INITIAL_NEW_CHARACTER);
   const [source, setSource] = useState('demo');
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState('');
+  const [installPrompt, setInstallPrompt] = useState(null);
 
   const abortRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -208,6 +210,15 @@ export default function App() {
   }, [messages.length, messages[messages.length - 1]?.text.length, view]);
 
   useEffect(() => {
+    const handler = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  useEffect(() => {
     if (!data || !library.activeId) return;
     const timer = setTimeout(() => {
       setLibrary((previous) => {
@@ -239,6 +250,17 @@ export default function App() {
     const query = characterQuery.trim().toLowerCase();
     if (!query) return true;
     return `${character.name} ${character.title}`.toLowerCase().includes(query);
+  });
+  const sortedCharacters = [...filteredCharacters].sort((left, right) => {
+    if (characterSort === 'name') {
+      return left.name.localeCompare(right.name, 'zh-CN');
+    }
+    if (characterSort === 'memories') {
+      return (
+        (right.bible?.memories?.length ?? 0) - (left.bible?.memories?.length ?? 0)
+      );
+    }
+    return new Date(right.updatedAt ?? 0) - new Date(left.updatedAt ?? 0);
   });
 
   const snapshotCharacters = () => {
@@ -389,6 +411,13 @@ export default function App() {
     await saveLibrary(next);
     applyCharacter(remaining[0]);
     setView('chat');
+  };
+
+  const installApp = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice.catch(() => {});
+    setInstallPrompt(null);
   };
 
   const renameActive = () => {
@@ -738,6 +767,11 @@ export default function App() {
               >
                 {importing ? '导入中…' : '导入'}
               </button>
+              {installPrompt && (
+                <button className="ghost" onClick={installApp}>
+                  安装
+                </button>
+              )}
               <button className="ghost" onClick={openSettings}>
                 设置
               </button>
@@ -878,15 +912,26 @@ export default function App() {
       {view === 'characters' && (
         <main className="page">
           <div className="page-inner">
-            <input
-              className="character-search"
-              type="search"
-              placeholder="搜索角色名 / 故事标题…"
-              value={characterQuery}
-              onChange={(event) => setCharacterQuery(event.target.value)}
-            />
+            <div className="character-toolbar">
+              <input
+                className="character-search"
+                type="search"
+                placeholder="搜索角色名 / 故事标题…"
+                value={characterQuery}
+                onChange={(event) => setCharacterQuery(event.target.value)}
+              />
+              <select
+                className="character-sort"
+                value={characterSort}
+                onChange={(event) => setCharacterSort(event.target.value)}
+              >
+                <option value="recent">最近使用</option>
+                <option value="name">按名字</option>
+                <option value="memories">按记忆数</option>
+              </select>
+            </div>
             <div className="character-grid">
-              {filteredCharacters.map((character) => (
+              {sortedCharacters.map((character) => (
                 <button
                   key={character.id}
                   className={`character-card ${
@@ -1456,6 +1501,14 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
           <h3>成本</h3>
           <p className="page-sub">
             估算按 DeepSeek V4.1 Flash 空闲价：输入 ¥1.56/M，输出 ¥4.69/M。实际以账单为准。
+          </p>
+        </section>
+
+        <section className="page-card">
+          <h3>安装</h3>
+          <p className="page-sub">
+            Chrome / Edge 支持「安装到桌面」；iOS Safari 用分享 → 添加到主屏幕。Android 用
+            Capacitor 打包的「鲸忆」。
           </p>
         </section>
       </div>

@@ -4,7 +4,7 @@
 
 - **聊天页**：只有角色名、消息流、输入框；不显示人设/记忆侧栏。
 - **记忆页**：上一轮注入、人设、关系、长期记忆、时间线、语气样本、未结束的线；删除当前角色也在这里。
-- **角色页**：左上角 ☰ 进入；角色卡片列表、导入新角色、使用 demo 角色。
+- **角色页**：左上角 ☰ 进入；角色卡片列表、搜索、排序（最近/名字/记忆数）、新建角色、导入新角色、使用 demo 角色。
 - **设置页**：模型、key、省流参数（上下文轮数/往事条数/记忆条数/输出 tokens/温度）。
 
 ## 组成
@@ -79,10 +79,18 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - 消息右上角「记住」：把该句写进长期记忆，下一轮就会注入。
 - 记忆页每条长期记忆可编辑 `kind / 文本 / importance`，右侧 `×` 删除；「改名」改当前角色名。
 
+## 安装到桌面
+
+- `public/manifest.webmanifest`：`display: standalone`、`theme_color #0b1020`、192/512 图标。
+- `public/sw.js`：network-first，GET 请求成功后写缓存；`/api/*` 不缓存。断网时回退已缓存页面。
+- Chrome/Edge 触发 `beforeinstallprompt` 后，角色页显示「安装」按钮。
+- iOS Safari 不支持该事件：用分享 → 添加到主屏幕。
+- Android 仍走 Capacitor 的「鲸忆」APK。
+
 ## 当前限制
 
 - zip 必须包含 `conversation.json`（官方导出解压后就是这个结构）；缺这个文件会报错。
-- 多角色切换、搜索、改名、新建已做；排序、批量管理还没做。
+- 多角色切换、搜索、排序、改名、新建已做；批量管理还没做。
 - 移动端访问需要 `adb reverse` 或 Capacitor 内嵌，暂不把 gateway 暴露到局域网。
 - 流式只渲染 `delta.content`；`reasoning_content` 已通过关闭思考避免。
 - 聊天记录已写入 IndexedDB：刷新/重启恢复导入的 story bible、主线消息和后续对话。
