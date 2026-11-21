@@ -38,6 +38,9 @@
 - [x] App 名称「鲸忆」+ 自定义图标
 - [x] 角色列表排序（最近 / 名字 / 记忆数）
 - [x] PWA：manifest + 安装到桌面 + service worker 离线壳
+- [x] 签名 release APK + AAB（v2/v3，keystore 已生成）
+- [x] DeepSeek 直连：release 填自己的 key 即可聊，无需 gateway
+- [x] 商店素材包 + 上架/合规清单（`store/`）
 - [x] 手机端 ADB 输入/发送 + force-stop 重启恢复验证（242 条会话）
 
 ## 目录
@@ -105,6 +108,7 @@ node server/gateway.mjs
 - 抽取默认走 DeepSeek `deepseek-flash`，智谱 `glm-4.7-flash` 作为 fallback；智谱 429 时自动切换。
 - 默认省流：最近 6 轮 + 最多 4 条往事 + 6 条长期记忆 + 输出 ≤500 tokens；输入框上方显示本轮估算成本。
 - 浏览器 E2E：`cd web && node scripts/e2e.mjs`（需要 gateway 已启动 + Edge；会验证导入、聊天、记忆页、设置页）。
+- 直连 E2E：先 `VITE_DIRECT_DEEPSEEK=true VITE_API_BASE='' npm run build`，再 `node scripts/e2e-direct.mjs`（从 `http://localhost:8787` 直接调 DeepSeek，验证 CORS/流式）。
 
 ## Android
 
@@ -127,6 +131,25 @@ APK：`web/android/app/build/outputs/apk/debug/app-debug.apk`
 adb reverse tcp:8787 tcp:8787
 adb install -r web/android/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+## 签名发布（可直接发给别人）
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1
+```
+
+产物：
+
+- `release/whale-memory-1.0.0.apk`：已签名，直接安装；默认 **DeepSeek 直连**，装完到设置填自己的 key 即可聊。
+- `release/whale-memory-1.0.0.aab`：Google Play 上传。
+- `release/keystore-backup/`：签名密钥 + 密码；**立刻离线备份，丢了无法更新**。
+
+注意：
+
+- debug 和 release 签名不同，手机装过 debug 要先卸载，不能覆盖安装。
+- 智谱仍走 gateway；DeepSeek 不需要。
+- 商店素材、隐私政策模板、Google Play / App Store / 国内商店清单在 `store/`。
+- 当前 release 尚未补举报/屏蔽/年龄门/未成年人模式；正式上架前必须做。
 
 - Redmi/Xiaomi 如果报 `INSTALL_FAILED_USER_RESTRICTED`：开发者选项里打开 **USB 安装**、**USB 调试（安全设置）**，再重试。
 - `androidScheme: http` + `cleartext: true` 只为本地调试；正式版换 HTTPS。

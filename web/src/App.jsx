@@ -5,7 +5,7 @@ import {
   createCharacterPack,
   downloadCharacterPack,
 } from './lib/character-pack.js';
-import { API_BASE } from './lib/config.js';
+import { API_BASE, DEFAULT_DIRECT_DEEPSEEK } from './lib/config.js';
 import { importFile, readCharacterPack } from './lib/import-client.js';
 import {
   clearLibrary,
@@ -30,6 +30,7 @@ const DEFAULT_SETTINGS = {
   model: 'deepseek-flash',
   apiKey: '',
   useServerKey: true,
+  directDeepseek: DEFAULT_DIRECT_DEEPSEEK,
   remember: false,
   maxRecent: 6,
   retrievalLimit: 4,
@@ -61,7 +62,9 @@ const firstChar = (name) => String(name || '?').slice(0, 1);
 const loadSettings = () => {
   try {
     const stored = JSON.parse(localStorage.getItem('whale-settings') || '{}');
-    return { ...DEFAULT_SETTINGS, ...stored };
+    const merged = { ...DEFAULT_SETTINGS, ...stored };
+    if (merged.directDeepseek) merged.useServerKey = false;
+    return merged;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }
@@ -126,6 +129,8 @@ export default function App() {
         (settings.provider === 'zhipu' ? 'glm-4.7-flash' : 'deepseek-flash'),
       apiKey: settings.apiKey || '',
       useServerKey: settings.useServerKey !== false,
+      directDeepseek:
+        settings.directDeepseek === true && (settings.provider || 'deepseek') === 'deepseek',
     }),
     [settings],
   );
@@ -619,18 +624,45 @@ export default function App() {
     abortRef.current = controller;
 
     try {
-      const response = await fetch(`${API_BASE}/api/chat`, {
+      if (config.directDeepseek && !config.apiKey) {
+        throw new Error('直连模式需要先填 DeepSeek API key');
+      }
+      if (!config.directDeepseek && !API_BASE) {
+        throw new Error('没有配置 gateway，请开启 DeepSeek 直连或设置 VITE_API_BASE');
+      }
+
+      const url = config.directDeepseek
+        ? 'https://api.deepseek.com/chat/completions'
+        : `${API_BASE}/api/chat`;
+      const headers = config.directDeepseek
+        ? {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${config.apiKey}`,
+          }
+        : { 'Content-Type': 'application/json' };
+      const body = config.directDeepseek
+        ? {
+            model: config.model,
+            messages: ctx.messages,
+            stream: true,
+            temperature: chatOptions.temperature,
+            max_tokens: chatOptions.maxOutputTokens,
+            thinking: { type: 'disabled' },
+          }
+        : {
+            provider: config.provider,
+            model: config.model,
+            apiKey: config.useServerKey ? undefined : config.apiKey,
+            messages: ctx.messages,
+            temperature: chatOptions.temperature,
+            maxTokens: chatOptions.maxOutputTokens,
+          };
+
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         signal: controller.signal,
-        body: JSON.stringify({
-          provider: config.provider,
-          model: config.model,
-          apiKey: config.useServerKey ? undefined : config.apiKey,
-          messages: ctx.messages,
-          temperature: chatOptions.temperature,
-          maxTokens: chatOptions.maxOutputTokens,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -642,6 +674,7 @@ export default function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let streamDone = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -654,7 +687,11 @@ export default function App() {
           const trimmed = line.trim();
           if (!trimmed.startsWith('data:')) continue;
           const payload = trimmed.slice(5).trim();
-          if (!payload || payload === '[DONE]') continue;
+          if (!payload) continue;
+          if (payload === '[DONE]') {
+            streamDone = true;
+            break;
+          }
           try {
             const json = JSON.parse(payload);
             const delta = json.choices?.[0]?.delta?.content ?? '';
@@ -672,7 +709,11 @@ export default function App() {
             // Ignore keepalive / partial SSE payloads.
           }
         }
+
+        if (streamDone) break;
       }
+
+      if (streamDone) await reader.cancel().catch(() => {});
 
       setMessages((previous) =>
         previous.map((message) =>
@@ -1447,10 +1488,27 @@ function SettingsPage({ draftSettings, setDraftSettings }) {
           <label className="check">
             <input
               type="checkbox"
+              disabled={Boolean(draftSettings.directDeepseek)}
               checked={draftSettings.useServerKey !== false}
               onChange={(event) => update('useServerKey', event.target.checked)}
             />
             使用服务器 .env 里的 key（仅本地）
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              disabled={(draftSettings.provider || 'deepseek') !== 'deepseek'}
+              checked={Boolean(draftSettings.directDeepseek)}
+              onChange={(event) => {
+                const direct = event.target.checked;
+                setDraftSettings((previous) => ({
+                  ...previous,
+                  directDeepseek: direct,
+                  useServerKey: direct ? false : previous.useServerKey,
+                }));
+              }}
+            />
+            DeepSeek 直连（不需要 gateway，必须填 key）
           </label>
           <label className="field">
             API key

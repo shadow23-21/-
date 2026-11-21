@@ -9,6 +9,9 @@ fixtures/private/
 web/android/.gradle/
 web/android/.idea/
 web/android/local.properties
+web/android/keystore.properties
+web/android/app/release.keystore
+release/
 web/android/app/src/main/assets/public/
 *.log
 .DS_Store

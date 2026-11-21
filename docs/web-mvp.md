@@ -61,6 +61,16 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - SSE 原样转发；不记录请求体/聊天内容
 - 只监听 `127.0.0.1`
 
+## DeepSeek 直连（release 默认）
+
+- 构建参数：`VITE_DIRECT_DEEPSEEK=true`、`VITE_API_BASE=''`。
+- 浏览器/WebView 直接 `fetch https://api.deepseek.com/chat/completions`，带用户自己的 key。
+- DeepSeek 的 CORS 会反射 `http://localhost` 等本地 Origin；已用 `http://localhost:8787` 实测流式成功。
+- 请求体加 `thinking: { type: "disabled" }`，避免只返回 reasoning。
+- SSE 解析遇到 `[DONE]` 主动结束并 `reader.cancel()`，避免直连 keep-alive 导致消息一直 pending。
+- 智谱没有可用 CORS，仍走 gateway。
+- 这样 release APK 安装后填 key 即可聊，不需要电脑上的 gateway。
+
 ## 导入
 
 - 「导入新角色」接受 **`.zip`**（官方导出直接传，浏览器用 fflate 解压并自动找 `conversation.json`），也接受 `.json` / `.jsonl` / `.txt`。
