@@ -22,6 +22,8 @@
 - [x] story bible 抽取（GLM-4.7-Flash，关闭思考；失败可降级确定性摘要）
 - [x] 本地 HTML demo（`index.html`，可直接打开）
 - [x] PWA 聊天 + BYOK + 检索上下文（本地 gateway，流式输出）
+- [x] 浏览器导入 + IndexedDB 持久化 + `/api/extract` 生成 story bible
+- [x] 浏览器 E2E：上传 fixture → 导入 → 聊天（`web/scripts/e2e.mjs`）
 - [x] Android 工程 + debug APK 构建通过（`web/android`）
 - [ ] 手机安装验证（Redmi 需要先开 USB 安装权限）
 
@@ -78,6 +80,9 @@ node server/gateway.mjs
 - 请求统一带 `thinking: { type: "disabled" }`：DeepSeek V4 和 GLM 默认思考，不关会只出 reasoning、正文为空。
 - 上下文 = 人设 + story bible + 检索到的往事 + 最近 8 轮；页面会显示估算 tokens / 成本。
 - 设置面板可切 DeepSeek / 智谱、改模型、填 key；key 只在本机 localStorage（勾选“记住”时）。
+- 「导入」按钮支持 `.json` / `.jsonl` / `.txt`；DeepSeek 官方 zip 先解压，选里面的 `conversation.json`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。
+- 抽取默认走 DeepSeek `deepseek-flash`，智谱 `glm-4.7-flash` 作为 fallback；智谱 429 时自动切换。
+- 浏览器 E2E：`cd web && node scripts/e2e.mjs`（需要 gateway 已启动 + Edge）。
 
 ## Android
 

@@ -3,6 +3,8 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { extractStoryBible } from '../src/memory/extract.mjs';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'web', 'dist');
 const HOST = '127.0.0.1';
@@ -85,6 +87,35 @@ function serveStatic(request, response) {
     'Cache-Control': extension === '.html' ? 'no-cache' : 'public, max-age=3600',
   });
   fs.createReadStream(file).pipe(response);
+}
+
+async function handleExtract(request, response) {
+  let payload;
+  try {
+    payload = JSON.parse(await readBody(request));
+  } catch (error) {
+    sendJson(response, 400, { error: `Invalid JSON: ${error.message}` });
+    return;
+  }
+
+  const events = Array.isArray(payload.events) ? payload.events : [];
+  if (events.length === 0) {
+    sendJson(response, 400, { error: 'No events to extract' });
+    return;
+  }
+
+  try {
+    const bible = await extractStoryBible(events, {
+      title: payload.title ?? '未命名故事',
+      envFile: path.join(ROOT, '.env'),
+      maxChars: Number(payload.maxChars ?? 12000),
+      provider: payload.provider ?? 'deepseek',
+      fallbackProvider: payload.fallbackProvider ?? 'zhipu',
+    });
+    sendJson(response, 200, bible);
+  } catch (error) {
+    sendJson(response, 500, { error: error.message });
+  }
 }
 
 async function handleChat(request, response) {
@@ -203,6 +234,15 @@ const server = http.createServer(async (request, response) => {
       return;
     }
     await handleChat(request, response);
+    return;
+  }
+
+  if (url.pathname === '/api/extract') {
+    if (request.method !== 'POST') {
+      sendJson(response, 405, { error: 'POST required' });
+      return;
+    }
+    await handleExtract(request, response);
     return;
   }
 

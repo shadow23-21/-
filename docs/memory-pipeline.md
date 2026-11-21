@@ -42,11 +42,15 @@ DeepSeek export
 
 ## 模型参数
 
-- 模型：`glm-4.7-flash`
-- `thinking: { type: "disabled" }`：必须，否则它会先把 token 花在 reasoning 上
-- `temperature: 0.2`
-- `max_tokens: 3000`
-- JSON 解析：去 ```json 围栏 + 取第一个 `{` 到最后一个 `}`
+| 角色 | provider | 模型 |
+|---|---|---|
+| 主抽取 | `deepseek` | `deepseek-flash` |
+| fallback | `zhipu` | `glm-4.7-flash` |
+
+- `thinking: { type: "disabled" }`：必须，否则 DeepSeek/GLM 会先把 token 花在 reasoning 上。
+- `temperature: 0.2`，`max_tokens: 3000`。
+- 429 / 5xx 自动重试 + 切 fallback；都失败时 CLI 降级确定性摘要，浏览器导入会返回错误。
+- JSON 解析：去 ```json 围栏 + 取第一个 `{` 到最后一个 `}`。
 
 ## 已知限制
 

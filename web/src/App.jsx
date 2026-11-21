@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buildContext } from './lib/context.js';
-
-// Empty for the local gateway; set VITE_API_BASE for the Android WebView
-// (e.g. http://127.0.0.1:8787 with `adb reverse tcp:8787 tcp:8787`).
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+import { API_BASE } from './lib/config.js';
+import { importFile } from './lib/import-client.js';
+import { clearSession, loadSession, saveSession } from './lib/storage.js';
 
 const uid = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
@@ -42,8 +41,13 @@ export default function App() {
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [source, setSource] = useState('demo');
+  const [importing, setImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState('');
 
   const abortRef = useRef(null);
+  const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
   const listRef = useRef(null);
 
@@ -60,21 +64,37 @@ export default function App() {
   );
 
   useEffect(() => {
-    fetch('/demo-data.json')
-      .then((response) => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const session = await loadSession();
+        if (cancelled) return;
+        if (session?.bible && Array.isArray(session.events) && session.events.length > 0) {
+          setData(session.bible);
+          setEvents(session.events);
+          setMessages(session.events.map((event) => ({ ...event, imported: true })));
+          setSource('imported');
+          setImportStatus(`已载入本地导入：${session.events.length} 条`);
+          return;
+        }
+
+        const response = await fetch('/demo-data.json');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
-      })
-      .then((payload) => {
+        const payload = await response.json();
+        if (cancelled) return;
         setData(payload);
-        setMessages(
-          payload.events.map((event) => ({
-            ...event,
-            imported: true,
-          })),
-        );
-      })
-      .catch((loadError) => setError(`加载 demo 数据失败：${loadError.message}`));
+        setEvents(payload.events);
+        setMessages(payload.events.map((event) => ({ ...event, imported: true })));
+        setSource('demo');
+      } catch (loadError) {
+        if (!cancelled) setError(`加载 demo 数据失败：${loadError.message}`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -98,6 +118,39 @@ export default function App() {
     setSettingsOpen(true);
   };
 
+  const handleFile = async (file) => {
+    if (!file || importing) return;
+    setImporting(true);
+    setImportStatus('解析中…');
+    setError('');
+
+    try {
+      const { result, bible } = await importFile(file);
+      const selected = result.selected.map((event) => ({ ...event, imported: true }));
+      setData(bible);
+      setEvents(selected);
+      setMessages(selected);
+      setContext(null);
+      setSource('imported');
+      await saveSession({
+        bible,
+        events: selected,
+        importedAt: new Date().toISOString(),
+      });
+      setImportStatus(`导入完成：${selected.length} 条主线`);
+    } catch (importError) {
+      setError(`导入失败：${importError.message}`);
+      setImportStatus('');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const resetToDemo = async () => {
+    await clearSession();
+    window.location.reload();
+  };
+
   const stop = () => {
     abortRef.current?.abort();
   };
@@ -117,7 +170,7 @@ export default function App() {
     // Build context from the messages *before* this user message, then append it.
     const ctx = buildContext({
       bible: data,
-      events: data.events,
+      events,
       messages,
       userText: text,
     });
@@ -186,7 +239,7 @@ export default function App() {
               setMessages((previous) =>
                 previous.map((message) =>
                   message.id === assistantId
-                    ? { ...message, text: message.text + delta, pending: false }
+                    ? { ...message, text: message.text + delta }
                     : message,
                 ),
               );
@@ -247,9 +300,34 @@ export default function App() {
             <span className="persona-dot" />
             {data.persona.name} · {importedCount} 条导入消息 · 语气样本{' '}
             {data.style_samples.length} 条
+            <span className="chip">{source === 'imported' ? '已导入' : 'demo'}</span>
+            {importStatus && <span>{importStatus}</span>}
           </div>
         </div>
         <div className="topbar-actions">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.jsonl,.txt"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = '';
+              handleFile(file);
+            }}
+          />
+          <button
+            className="ghost"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            {importing ? '导入中…' : '导入'}
+          </button>
+          {source === 'imported' && (
+            <button className="ghost small" onClick={resetToDemo}>
+              恢复 demo
+            </button>
+          )}
           <span className={`status ${streaming ? 'live' : ''}`}>
             {streaming ? '生成中…' : '本地 · BYOK'}
           </span>

@@ -327,54 +327,95 @@ export function deterministicBible(events, options = {}) {
   return bible;
 }
 
-async function callZhipu(messages, options) {
-  const apiKey = options.apiKey;
-  if (!apiKey) throw new Error('ZHIPU_API_KEY is missing');
-  const url =
-    options.baseUrl ?? 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-  const response = await fetch(url, {
+const PROVIDERS = {
+  deepseek: {
+    url: 'https://api.deepseek.com/chat/completions',
+    model: 'deepseek-flash',
+    envKey: 'DEEPSEEK_API_KEY',
+  },
+  zhipu: {
+    url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+    model: 'glm-4.7-flash',
+    envKey: 'ZHIPU_API_KEY',
+  },
+};
+
+async function callModel(messages, options = {}) {
+  const provider = options.provider ?? 'deepseek';
+  const config = PROVIDERS[provider];
+  if (!config) throw new Error(`Unknown provider: ${provider}`);
+
+  const env = options.env ?? loadEnv(options.envFile ?? '.env');
+  const apiKey = options.apiKey ?? process.env[config.envKey] ?? env[config.envKey];
+  if (!apiKey) throw new Error(`${config.envKey} is missing`);
+
+  const response = await fetch(config.url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: options.model ?? 'glm-4.7-flash',
+      model: options.model ?? config.model,
       messages,
       max_tokens: options.maxTokens ?? 3000,
       temperature: 0.2,
       thinking: { type: 'disabled' },
     }),
   });
+
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(`GLM ${response.status}: ${text.slice(0, 500)}`);
+    throw new Error(`${provider} ${response.status}: ${text.slice(0, 500)}`);
   }
   const data = JSON.parse(text);
   const content = data.choices?.[0]?.message?.content ?? '';
   if (!content.trim()) {
     const finish = data.choices?.[0]?.finish_reason;
-    throw new Error(`GLM returned empty content (finish=${finish})`);
+    throw new Error(`${provider} returned empty content (finish=${finish})`);
   }
   return content;
+}
+
+async function callWithFallback(messages, options = {}) {
+  const primary = options.provider ?? 'deepseek';
+  const fallback =
+    options.fallbackProvider ?? (primary === 'deepseek' ? 'zhipu' : 'deepseek');
+  const providers = [...new Set([primary, fallback])];
+  const env = loadEnv(options.envFile ?? '.env');
+  let lastError;
+
+  for (const provider of providers) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await callModel(messages, { ...options, provider, env });
+      } catch (error) {
+        lastError = error;
+        // Only retry rate limits / upstream 5xx; missing key or bad request
+        // should move straight to the fallback provider.
+        if (!/\b(429|5\d\d)\b/.test(error.message)) break;
+        await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 export async function extractStoryBible(events, options = {}) {
   if (events.length === 0) throw new Error('No events to extract');
   if (options.noLlm) return deterministicBible(events, options);
 
-  const env = loadEnv(options.envFile ?? '.env');
-  const apiKey = options.apiKey ?? process.env.ZHIPU_API_KEY ?? env.ZHIPU_API_KEY;
-  if (!apiKey) throw new Error('ZHIPU_API_KEY is missing (use --no-llm to skip)');
-
+  const provider = options.provider ?? 'deepseek';
+  const model = options.model ?? PROVIDERS[provider]?.model;
   const title = options.title ?? events[0]?.title ?? '未命名故事';
   const chunks = chunkEvents(events, options.maxChars ?? 12000);
   const bibles = [];
 
   for (const chunk of chunks) {
-    const content = await callZhipu(buildMessages(chunk, { title }), {
+    const content = await callWithFallback(buildMessages(chunk, { title }), {
       ...options,
-      apiKey,
+      provider,
     });
     bibles.push(normalizeBible(parseJsonObject(content), { title }));
   }
@@ -382,7 +423,8 @@ export async function extractStoryBible(events, options = {}) {
   const merged = mergeBibles(bibles);
   merged.meta = {
     source: 'llm',
-    model: options.model ?? 'glm-4.7-flash',
+    provider,
+    model,
     chunks: chunks.length,
     generatedAt: new Date().toISOString(),
   };

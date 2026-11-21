@@ -32,7 +32,7 @@ for (let index = 0; index < args.length; index += 1) {
 
 if (!file) {
   console.error(
-    'Usage: node scripts/build-memory.mjs <file> [--out dir] [--title title] [--no-llm] [--model glm-4.7-flash]',
+    'Usage: node scripts/build-memory.mjs <file> [--out dir] [--title title] [--no-llm] [--provider deepseek|zhipu] [--model name]',
   );
   process.exit(1);
 }
@@ -68,7 +68,8 @@ try {
   bible = await extractStoryBible(result.selected, {
     title,
     envFile: '.env',
-    model: options.model ?? 'glm-4.7-flash',
+    provider: options.provider ?? 'deepseek',
+    model: options.model,
     maxChars: Number(options['max-chars'] ?? 12000),
     noLlm: options.noLlm === true,
   });

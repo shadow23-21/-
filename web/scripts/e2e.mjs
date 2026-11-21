@@ -1,0 +1,78 @@
+import path from 'node:path';
+
+import puppeteer from 'puppeteer-core';
+
+const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const URL = 'http://127.0.0.1:8787/';
+const fixture = path.resolve('../fixtures/deepseek-raw.json');
+
+const browser = await puppeteer.launch({
+  executablePath: EDGE,
+  headless: true,
+  args: ['--no-sandbox', '--disable-gpu'],
+});
+
+try {
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1440, height: 1200 });
+  page.on('console', (message) => {
+    if (message.type() === 'error') console.log('PAGE ERROR:', message.text());
+  });
+  page.on('response', async (response) => {
+    if (response.status() >= 400) {
+      let body = '';
+      try {
+        body = await response.text();
+      } catch {}
+      console.log('HTTP', response.status(), response.url(), body.slice(0, 500));
+    }
+  });
+
+  await page.goto(URL, { waitUntil: 'networkidle0' });
+  await page.waitForSelector('input[type=file]', { state: 'attached' });
+
+  const fileInput = await page.$('input[type=file]');
+  await fileInput.uploadFile(fixture);
+
+  await page.waitForFunction(
+    () => document.body.innerText.includes('导入完成'),
+    { timeout: 120000 },
+  );
+  await page.screenshot({ path: '../out/web-demo/imported.png' });
+  console.log('import: ok');
+
+  const assistantCount = await page.$$eval(
+    '.message.assistant',
+    (nodes) => nodes.length,
+  );
+
+  const textarea = await page.$('textarea');
+  await textarea.type('你还记得那把伞吗？');
+  await page.keyboard.press('Enter');
+
+  await page.waitForFunction(
+    (count) => {
+      const nodes = [...document.querySelectorAll('.message.assistant .message-text')];
+      const last = nodes.at(-1);
+      return (
+        nodes.length > count &&
+        last &&
+        last.textContent.trim().length > 10 &&
+        !document.querySelector('.cursor') &&
+        !document.body.innerText.includes('生成中…')
+      );
+    },
+    { timeout: 120000 },
+    assistantCount,
+  );
+
+  await page.screenshot({ path: '../out/web-demo/chat.png' });
+  const reply = await page.$$eval(
+    '.message.assistant .message-text',
+    (nodes) => nodes.at(-1)?.textContent ?? '',
+  );
+  console.log('chat reply:', reply.slice(0, 120));
+  console.log('chat: ok');
+} finally {
+  await browser.close();
+}

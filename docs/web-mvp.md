@@ -50,10 +50,17 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - SSE 原样转发；不记录请求体/聊天内容
 - 只监听 `127.0.0.1`
 
+## 导入
+
+- 「导入」按钮接受 `.json` / `.jsonl` / `.txt`。
+- 浏览器里直接调用 `src/import/index.mjs` 的 `importChat()`；支持 DeepSeek RAW、官方假设形状、tree、ChatGPT、SillyTavern、纯文本。
+- 解析后把主线消息 POST 到 `/api/extract`，生成 story bible。
+- 结果存 IndexedDB（`whale-memory` / `session` / `current`）；刷新自动载入。
+- 「恢复 demo」清掉 IndexedDB 并重载。
+
 ## 当前限制
 
-- demo 数据来自合成 fixture，浏览器端还没有做“上传导出文件 → 解析 → IndexedDB”。
-- 记忆存在内存里，刷新回到 demo 初始状态；下一步接 IndexedDB / Capacitor SQLite。
+- DeepSeek 官方导出是 zip，浏览器暂不解压；先手动解压，选 `conversation.json`。
+- 多角色切换 UI 还没有；`character_id` 隔离在 SQLite 层已留好。
 - 移动端访问需要 `adb reverse` 或 Capacitor 内嵌，暂不把 gateway 暴露到局域网。
 - 流式只渲染 `delta.content`；`reasoning_content` 已通过关闭思考避免。
-- 没有多角色切换 UI；`character_id` 隔离在 SQLite 层已留好。
