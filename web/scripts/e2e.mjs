@@ -83,6 +83,20 @@ try {
   const characterCount = await page.$$eval('.character-card', (nodes) => nodes.length);
   console.log('characters:', characterCount);
   await page.screenshot({ path: '../out/web-demo/characters.png' });
+
+  await page.type('.character-search', '雨夜');
+  await page.waitForFunction(() => document.querySelectorAll('.character-card').length === 1);
+  console.log('character search: ok');
+  await page.$eval('.character-search', (input) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      'value',
+    ).set;
+    setter.call(input, '');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.waitForFunction(() => document.querySelectorAll('.character-card').length === 2);
+
   await page.evaluate(() => document.querySelector('.character-card')?.click());
   await page.waitForSelector('.composer textarea');
 
@@ -100,6 +114,33 @@ try {
       ?.click();
   });
   await page.waitForSelector('.page-card');
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept('沈砚·改');
+  });
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((button) => button.textContent.trim() === '改名')
+      ?.click();
+  });
+  await page.waitForFunction(() => document.body.innerText.includes('沈砚·改'));
+  console.log('rename: ok');
+
+  await page.evaluate(() => document.querySelector('.memory-edit-btn')?.click());
+  await page.waitForSelector('.memory-edit textarea');
+  await page.$eval('.memory-edit textarea', (textarea) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      'value',
+    ).set;
+    setter.call(textarea, '');
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.type('.memory-edit textarea', '手动编辑的记忆');
+  await page.evaluate(() => document.querySelector('.memory-edit .primary')?.click());
+  await page.waitForFunction(() => document.body.innerText.includes('手动编辑的记忆'));
+  console.log('memory edit: ok');
+
   await page.screenshot({ path: '../out/web-demo/memory.png' });
   console.log('memory page: ok');
 

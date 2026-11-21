@@ -59,9 +59,29 @@ test('retrieve finds the event matching the query', () => {
   assert.ok(results.some((event) => event.text.includes('伞')));
 });
 
-test('memoryLines prefers matching memory', () => {
+test('retrieve ranks a specific old event above generic distractors', () => {
+  const corpus = Array.from({ length: 30 }, (_, index) => ({
+    id: `distractor-${index}`,
+    role: 'assistant',
+    text: `第 ${index} 条普通日常对话，在房间里待着。`,
+  }));
+  corpus.splice(3, 0, {
+    id: 'old-meeting',
+    role: 'assistant',
+    text: '我第一次见你是在医院走廊，你穿着白大褂。',
+  });
+
+  const results = retrieve(corpus, '第一次见面是在哪里', {
+    excludeLast: 0,
+    limit: 3,
+  });
+  assert.equal(results[0].id, 'old-meeting');
+});
+
+test('memoryLines prefers matching memory but keeps core memories', () => {
   const results = memoryLines(bible, '蛋糕');
   assert.equal(results[0].text, '喜欢吃栗子蛋糕');
+  assert.ok(results.some((memory) => memory.text === '周末去看海'));
 });
 
 test('buildContext includes persona, memory and exactly one user message', () => {
@@ -85,6 +105,21 @@ test('buildContext includes persona, memory and exactly one user message', () =>
     1,
   );
   assert.ok(context.estimatedInputTokens > 0);
+});
+
+test('buildContext respects the cheap defaults and custom budgets', () => {
+  const context = buildContext({
+    bible,
+    events,
+    messages: [{ role: 'assistant', text: '走廊尽头的灯闪了一下。' }],
+    userText: '周末还去看海吗？',
+    maxRecent: 2,
+    retrievalLimit: 1,
+    memoryLimit: 1,
+  });
+  assert.ok(context.memories.length <= 1);
+  assert.ok(context.retrieved.length <= 1);
+  assert.equal(context.options.maxRecent, 2);
 });
 
 test('cost estimate is positive', () => {

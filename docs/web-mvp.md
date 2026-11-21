@@ -31,11 +31,11 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 
 检索（`web/src/lib/context.js`）：
 
-- 中文 bigram + 单字 + 英文词
-- 候选池排除最近 8 条
-- 分数 = 词重叠 / sqrt(事件词数) + 轻微时间衰减
-- 最多 6 条、约 4.5k 字
-- 查不到时回退最近 3 条
+- 中文 bigram + 单字 + 英文词；单字权重 0.3，bigram/英文词权重 1
+- BM25：IDF + 文档长度归一化（k1=1.2, b=0.75）+ 轻微时间衰减
+- 候选池排除最近 6 条；最多 4 条、约 4.5k 字
+- 长期记忆：查询命中的排前面，再补最多 3 条 importance 最高的核心记忆
+- 查不到就返回空，不拿最近消息凑数（最近消息本来就在上下文里）
 
 成本估算按 DeepSeek V4.1 Flash 空闲价（¥1.56/M 输入、¥4.69/M 输出），只用于 UI 提示。
 
@@ -65,18 +65,18 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - 浏览器里直接调用 `src/import/index.mjs` 的 `importChat()`；支持 DeepSeek RAW、官方假设形状、tree、ChatGPT、SillyTavern、纯文本。
 - 解析后把主线消息 POST 到 `/api/extract`，生成 story bible。
 - 结果作为新角色存 IndexedDB（`whale-memory` / `session` / `library` / `characters`）；刷新自动载入。
-- 角色列表可切换角色、新建 demo 角色；删除当前角色会移除它的聊天记录。
+- 角色列表可切换角色、搜索、改名、新建 demo 角色；删除当前角色会移除它的聊天记录。
 
 ## 角色与手动记忆
 
 - 每个角色有独立的 `bible / events / messages / source`，切换角色不会串记忆。
 - 消息右上角「记住」：把该句写进长期记忆，下一轮就会注入。
-- 记忆页每条长期记忆右侧有 `×`，可删除。
+- 记忆页每条长期记忆可编辑 `kind / 文本 / importance`，右侧 `×` 删除；「改名」改当前角色名。
 
 ## 当前限制
 
 - DeepSeek 官方导出是 zip，浏览器暂不解压；先手动解压，选 `conversation.json`。
-- 多角色切换已做；重命名、排序、搜索还没做。
+- 多角色切换、搜索、改名已做；排序、批量管理还没做。
 - 移动端访问需要 `adb reverse` 或 Capacitor 内嵌，暂不把 gateway 暴露到局域网。
 - 流式只渲染 `delta.content`；`reasoning_content` 已通过关闭思考避免。
 - 聊天记录已写入 IndexedDB：刷新/重启恢复导入的 story bible、主线消息和后续对话。

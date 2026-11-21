@@ -90,6 +90,7 @@ export default function App() {
   const [settings, setSettings] = useState(loadSettings);
   const [draftSettings, setDraftSettings] = useState(settings);
   const [showAll, setShowAll] = useState(false);
+  const [characterQuery, setCharacterQuery] = useState('');
   const [source, setSource] = useState('demo');
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState('');
@@ -222,8 +223,11 @@ export default function App() {
 
   const importedCount = messages.filter((message) => message.imported).length;
   const visibleMessages = showAll ? messages : messages.slice(-60);
-  const activeCharacter =
-    library.characters.find((character) => character.id === library.activeId) ?? null;
+  const filteredCharacters = library.characters.filter((character) => {
+    const query = characterQuery.trim().toLowerCase();
+    if (!query) return true;
+    return `${character.name} ${character.title}`.toLowerCase().includes(query);
+  });
 
   const snapshotCharacters = () => {
     if (!data) return library.characters;
@@ -292,6 +296,17 @@ export default function App() {
     setView('chat');
   };
 
+  const renameActive = () => {
+    const nextName = window.prompt('角色名', data.persona.name);
+    if (!nextName || !nextName.trim()) return;
+    setData((previous) =>
+      previous
+        ? { ...previous, persona: { ...previous.persona, name: nextName.trim() } }
+        : previous,
+    );
+    setImportStatus('角色名已更新');
+  };
+
   const saveSettingsForm = () => {
     const next = {
       ...DEFAULT_SETTINGS,
@@ -358,6 +373,20 @@ export default function App() {
       };
     });
     setImportStatus('已加入长期记忆');
+  };
+
+  const updateMemory = (index, updates) => {
+    setData((previous) =>
+      previous
+        ? {
+            ...previous,
+            memories: previous.memories.map((memory, memoryIndex) =>
+              memoryIndex === index ? { ...memory, ...updates } : memory,
+            ),
+          }
+        : previous,
+    );
+    setImportStatus('已更新长期记忆');
   };
 
   const removeMemory = (index) => {
@@ -608,6 +637,9 @@ export default function App() {
           )}
           {view === 'memory' && (
             <>
+              <button className="ghost" onClick={renameActive}>
+                改名
+              </button>
               <button className="ghost" onClick={deleteActive}>
                 删除
               </button>
@@ -721,8 +753,15 @@ export default function App() {
       {view === 'characters' && (
         <main className="page">
           <div className="page-inner">
+            <input
+              className="character-search"
+              type="search"
+              placeholder="搜索角色名 / 故事标题…"
+              value={characterQuery}
+              onChange={(event) => setCharacterQuery(event.target.value)}
+            />
             <div className="character-grid">
-              {library.characters.map((character) => (
+              {filteredCharacters.map((character) => (
                 <button
                   key={character.id}
                   className={`character-card ${
@@ -742,6 +781,9 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {filteredCharacters.length === 0 && (
+              <p className="page-sub">没有匹配的角色。</p>
+            )}
             <div className="page-actions">
               <button
                 className="ghost"
@@ -763,6 +805,7 @@ export default function App() {
           data={data}
           chatOptions={chatOptions}
           context={context}
+          onUpdateMemory={updateMemory}
           onRemoveMemory={removeMemory}
         />
       )}
@@ -841,9 +884,30 @@ function InjectionSection({ context }) {
   );
 }
 
-function MemoryPage({ data, chatOptions, context, onRemoveMemory }) {
+function MemoryPage({ data, chatOptions, context, onUpdateMemory, onRemoveMemory }) {
   const persona = data.persona;
   const relationship = data.relationship;
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [editKind, setEditKind] = useState('事件');
+  const [editImportance, setEditImportance] = useState(0.5);
+
+  const startEdit = (index, memory) => {
+    setEditingIndex(index);
+    setEditText(memory.text);
+    setEditKind(memory.kind || '事件');
+    setEditImportance(memory.importance ?? 0.5);
+  };
+
+  const saveEdit = () => {
+    if (editingIndex === null || !editText.trim()) return;
+    onUpdateMemory(editingIndex, {
+      kind: editKind || '事件',
+      text: editText.trim(),
+      importance: Math.min(1, Math.max(0, Number(editImportance) || 0.5)),
+    });
+    setEditingIndex(null);
+  };
 
   return (
     <main className="page">
@@ -923,16 +987,68 @@ function MemoryPage({ data, chatOptions, context, onRemoveMemory }) {
           <ul className="memory-list">
             {data.memories.map((memory, index) => (
               <li key={`${memory.text}-${index}`}>
-                <span className="kind">{memory.kind}</span>
-                {memory.text}
-                <span className="importance">{memory.importance.toFixed(2)}</span>
-                <button
-                  className="memory-remove"
-                  onClick={() => onRemoveMemory(index)}
-                  aria-label="删除记忆"
-                >
-                  ×
-                </button>
+                {editingIndex === index ? (
+                  <div className="memory-edit">
+                    <div className="memory-edit-row">
+                      <select
+                        value={editKind}
+                        onChange={(event) => setEditKind(event.target.value)}
+                      >
+                        {['约定', '称呼', '心事', '事件', '喜好', '禁忌', '梗'].map(
+                          (kind) => (
+                            <option key={kind} value={kind}>
+                              {kind}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                      <input
+                        type="number"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={editImportance}
+                        onChange={(event) => setEditImportance(event.target.value)}
+                      />
+                    </div>
+                    <textarea
+                      rows={3}
+                      value={editText}
+                      onChange={(event) => setEditText(event.target.value)}
+                    />
+                    <div className="memory-edit-actions">
+                      <button className="ghost small" onClick={() => setEditingIndex(null)}>
+                        取消
+                      </button>
+                      <button
+                        className="primary"
+                        onClick={saveEdit}
+                        disabled={!editText.trim()}
+                      >
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <span className="kind">{memory.kind}</span>
+                    {memory.text}
+                    <span className="importance">{memory.importance.toFixed(2)}</span>
+                    <button
+                      className="memory-edit-btn"
+                      onClick={() => startEdit(index, memory)}
+                    >
+                      编辑
+                    </button>
+                    <button
+                      className="memory-remove"
+                      onClick={() => onRemoveMemory(index)}
+                      aria-label="删除记忆"
+                    >
+                      ×
+                    </button>
+                  </>
+                )}
               </li>
             ))}
           </ul>

@@ -13,28 +13,58 @@ export function tokenize(text) {
   return [...new Set([...words, ...bigrams])];
 }
 
+function termWeight(term) {
+  // Single Chinese characters are useful for queries like "伞" but noisy.
+  return term.length === 1 && CJK.test(term) ? 0.3 : 1;
+}
+
 export function retrieve(events, query, options = {}) {
   const excludeLast = options.excludeLast ?? 8;
   const limit = options.limit ?? 6;
   const maxChars = options.maxChars ?? 4500;
   const pool = events.slice(0, Math.max(0, events.length - excludeLast));
-  const queryTerms = new Set(tokenize(query));
+  const queryTerms = [...new Set(tokenize(query))];
 
-  if (queryTerms.size === 0) return pool.slice(-3);
+  if (queryTerms.length === 0 || pool.length === 0) return [];
 
-  const scored = pool
-    .map((event, index) => {
-      const terms = new Set(tokenize(event.text));
-      let overlap = 0;
-      for (const term of queryTerms) if (terms.has(term)) overlap += 1;
-      const recency = index / Math.max(1, pool.length);
+  const documents = pool.map((event) => ({
+    event,
+    terms: new Set(tokenize(event.text)),
+  }));
+  const documentFrequency = new Map();
+  for (const document of documents) {
+    for (const term of document.terms) {
+      documentFrequency.set(term, (documentFrequency.get(term) ?? 0) + 1);
+    }
+  }
+
+  const total = documents.length;
+  const averageLength =
+    documents.reduce((sum, document) => sum + document.terms.size, 0) / total;
+  const k1 = 1.2;
+  const b = 0.75;
+
+  const scored = documents
+    .map((document, index) => {
+      let score = 0;
+      let matched = 0;
+      for (const term of queryTerms) {
+        if (!document.terms.has(term)) continue;
+        const df = documentFrequency.get(term) ?? 0;
+        const idf = Math.log(1 + (total - df + 0.5) / (df + 0.5));
+        const lengthRatio = document.terms.size / Math.max(1, averageLength);
+        const denominator = 1 + k1 * (1 - b + b * lengthRatio);
+        score += termWeight(term) * idf * ((k1 + 1) / denominator);
+        matched += 1;
+      }
+      const recency = index / Math.max(1, total - 1);
       return {
-        event,
-        overlap,
-        score: overlap / Math.sqrt(terms.size + 1) + recency * 0.12,
+        event: document.event,
+        matched,
+        score: score + recency * 0.05,
       };
     })
-    .filter((item) => item.overlap > 0)
+    .filter((item) => item.matched > 0)
     .sort((left, right) => right.score - left.score);
 
   const selected = [];
@@ -46,28 +76,45 @@ export function retrieve(events, query, options = {}) {
     chars += item.event.text.length;
   }
 
-  return selected.length > 0 ? selected : pool.slice(-3);
+  return selected;
 }
 
 export function memoryLines(bible, query, limit = 8) {
-  const queryTerms = new Set(tokenize(query));
-  const scored = (bible.memories ?? [])
+  const memories = bible.memories ?? [];
+  const queryTerms = [...new Set(tokenize(query))];
+  const scored = memories
     .map((memory, index) => {
       const terms = new Set(tokenize(`${memory.kind} ${memory.text}`));
       let overlap = 0;
-      for (const term of queryTerms) if (terms.has(term)) overlap += 1;
+      for (const term of queryTerms) {
+        if (terms.has(term)) overlap += termWeight(term);
+      }
       return {
         memory,
         overlap,
         score:
-          overlap +
-          memory.importance * 0.5 +
-          (index / Math.max(1, (bible.memories ?? []).length)) * 0.1,
+          overlap / Math.sqrt(terms.size + 1) +
+          memory.importance * 0.8 +
+          (index / Math.max(1, memories.length)) * 0.05,
       };
     })
     .sort((left, right) => right.score - left.score);
 
-  return scored.slice(0, limit).map((item) => item.memory);
+  // Query matches first, then the most important core memories, then the rest.
+  const core = [...memories]
+    .sort((left, right) => right.importance - left.importance)
+    .slice(0, Math.min(3, limit));
+  const matched = scored
+    .filter((item) => item.overlap > 0)
+    .map((item) => item.memory);
+  const merged = [];
+
+  for (const memory of [...matched, ...core, ...scored.map((item) => item.memory)]) {
+    if (!merged.includes(memory)) merged.push(memory);
+    if (merged.length >= limit) break;
+  }
+
+  return merged;
 }
 
 export function estimateCostCNY(inputTokens, outputTokens = 300) {
