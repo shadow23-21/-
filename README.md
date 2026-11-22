@@ -167,7 +167,7 @@ npm.cmd run build
 ```
 
 用户：设置 → 鲸忆额度 → 输入兑换码 → 保存 → 聊天。每轮扣 1 次；上游失败自动退回。
-完整部署/卖码/限流清单见 [docs/managed-mode.md](docs/managed-mode.md)；公网部署（Railway/Zeabur/VPS/Docker）见 [docs/deploy.md](docs/deploy.md)。
+完整部署/卖码/限流清单见 [docs/managed-mode.md](docs/managed-mode.md)；公网部署（Railway/VPS/Docker）见 [docs/deploy.md](docs/deploy.md)。
 
 ```bash
 # VPS 最简：Docker + 反向代理

@@ -2,24 +2,25 @@
 
 托管兑换码必须有公网 HTTPS gateway；微店只负责发码。
 
-## 方案 A：Railway / Zeabur（最省事，不用买域名）
+## 方案 A：Railway（推荐）
 
-适合不想碰 Linux 的人。平台会送一个 `*.up.railway.app` / `*.zeabur.app` 三级域名，**不用先买域名**。
+> **不要用 Zeabur**：官方公告已说明 2026/12/31 停止运营，部分服务 12/1 起停止。  
+> 用 Railway：支持 Dockerfile、持久化 Volume、自动 HTTPS。
 
-1. 仓库已在 GitHub；代码里已有 `Dockerfile`。
-2. 注册 Railway 或 Zeabur（Zeabur 中文界面、支持支付宝；Railway 美元）。
-3. 新建 Project → Deploy from GitHub → 选这个仓库。
-4. 平台自动识别根目录 `Dockerfile` 并构建。
+1. 仓库已在 GitHub；根目录有 `Dockerfile` 和 `railway.json`。
+2. 打开 `https://railway.app/`，用 GitHub 登录。
+3. **New Project → Deploy from GitHub repo**，选 `shadow23-21/-`。
+4. Railway 会自动按 `railway.json` 用 Dockerfile 构建。
 5. 环境变量：
    - `DEEPSEEK_API_KEY=sk-...`
    - `HOST=0.0.0.0`
    - `BILLING_DB=/data/billing.db`
-6. 添加持久化 Volume，挂载到 `/data`（**必须**，否则重启丢余额/码）。
-7. 在平台里生成公网域名（Networking → Generate Domain）。
-8. 打开 `https://你的域名/api/health`，看到 `ok: true`。
-9. 在这个域名下生成兑换码，不要在本机生成后再搬。
+6. 添加 Volume，挂载到 `/data`（**必须**，否则重启丢余额/码）。
+7. Settings → Networking → **Generate Domain**，得到 `https://xxx.up.railway.app`。
+8. 打开 `https://xxx.up.railway.app/api/health`，看到 `ok: true`。
+9. 在这个生产环境生成兑换码，不要在本机生成后再搬。
 
-平台终端里：
+Railway 终端里：
 
 ```bash
 node scripts/codes.mjs create --plan monthly19 --count 20 --out codes-monthly19.txt
