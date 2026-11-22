@@ -1998,6 +1998,9 @@ function SettingsPage({
           <p className="page-sub">
             角色和聊天记录保存在本机；生成回复由鲸忆额度服务提供。
           </p>
+          <p className="page-sub">
+            兑换码购买：闲鱼搜索「鲸忆鲸忆」。
+          </p>
         </section>
       </div>
     </main>
