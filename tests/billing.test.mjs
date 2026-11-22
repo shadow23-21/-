@@ -63,6 +63,34 @@ test('redeem, consume, refund and stats', () => {
   }
 });
 
+test('monthly grants expire and stop being consumable', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'whale-billing-expiry-'));
+  const db = openBilling(path.join(dir, 'billing.db'));
+
+  try {
+    const [code] = createCodes(db, 1200, 1, 30);
+    const redeemed = redeemCode(db, code);
+    assert.ok(redeemed.expiresAt);
+    assert.equal(redeemed.credits, 1200);
+
+    db.prepare('UPDATE grants SET expires_at = ? WHERE account_id = ?').run(
+      '2000-01-01T00:00:00.000Z',
+      redeemed.accountId,
+    );
+    assert.equal(getAccount(db, redeemed.token).credits, 0);
+    assert.equal(consumeCredit(db, redeemed.accountId, 1), false);
+    assert.deepEqual(billingStats(db), {
+      accounts: 1,
+      credits: 0,
+      codes: 1,
+      used: 1,
+    });
+  } finally {
+    db.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('importCodes imports a portable code list', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'whale-billing-import-'));
   const db = openBilling(path.join(dir, 'billing.db'));

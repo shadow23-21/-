@@ -6,6 +6,11 @@ import {
 } from './lib/auto-memory.js';
 import { buildContext } from './lib/context.js';
 import {
+  isOutOfCharacter,
+  repairInstruction,
+  sanitizeOoc,
+} from './lib/persona-guard.js';
+import {
   createCharacterPack,
   downloadCharacterPack,
 } from './lib/character-pack.js';
@@ -172,6 +177,7 @@ export default function App() {
     () => localStorage.getItem('whale-account-token') || '',
   );
   const [credits, setCredits] = useState(null);
+  const [expiresAt, setExpiresAt] = useState(null);
   const [redeemInput, setRedeemInput] = useState('');
   const [quotaNotice, setQuotaNotice] = useState(false);
 
@@ -303,7 +309,10 @@ export default function App() {
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
-        if (!cancelled && payload) setCredits(payload.credits);
+        if (!cancelled && payload) {
+          setCredits(payload.credits);
+          setExpiresAt(payload.expiresAt ?? null);
+        }
       })
       .catch(() => {});
     return () => {
@@ -599,6 +608,7 @@ export default function App() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const payload = await response.json();
       setCredits(payload.credits);
+      setExpiresAt(payload.expiresAt ?? null);
     } catch (balanceError) {
       setError(`余额读取失败：${balanceError.message}`);
     }
@@ -623,6 +633,7 @@ export default function App() {
       localStorage.setItem('whale-account-token', payload.token);
       setAccountToken(payload.token);
       setCredits(payload.credits);
+      setExpiresAt(payload.expiresAt ?? null);
       setRedeemInput('');
       setQuotaNotice(false);
       persistSettings({
@@ -641,6 +652,7 @@ export default function App() {
     localStorage.removeItem('whale-account-token');
     setAccountToken('');
     setCredits(null);
+    setExpiresAt(null);
     persistSettings({ ...settings, managed: false });
   };
 
@@ -802,6 +814,111 @@ export default function App() {
 
   const stop = () => abortRef.current?.abort();
 
+  const requestCompletion = async (chatMessages, signal, onDelta) => {
+    let url;
+    let headers;
+    let body;
+
+    if (config.managed) {
+      if (!accountToken) throw new Error('托管模式需要先兑换额度');
+      url = `${API_BASE}/api/chat`;
+      headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accountToken}`,
+      };
+      body = {
+        managed: true,
+        provider: config.provider,
+        model: config.model,
+        messages: chatMessages,
+        temperature: chatOptions.temperature,
+        maxTokens: chatOptions.maxOutputTokens,
+      };
+    } else if (config.directDeepseek) {
+      if (!config.apiKey) throw new Error('直连模式需要先填 DeepSeek API key');
+      url = 'https://api.deepseek.com/chat/completions';
+      headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey}`,
+      };
+      body = {
+        model: config.model,
+        messages: chatMessages,
+        stream: true,
+        temperature: chatOptions.temperature,
+        max_tokens: chatOptions.maxOutputTokens,
+        thinking: { type: 'disabled' },
+      };
+    } else {
+      if (!API_BASE) {
+        throw new Error('没有配置 gateway，请开启 DeepSeek 直连或设置 VITE_API_BASE');
+      }
+      url = `${API_BASE}/api/chat`;
+      headers = { 'Content-Type': 'application/json' };
+      body = {
+        provider: config.provider,
+        model: config.model,
+        apiKey: config.useServerKey ? undefined : config.apiKey,
+        messages: chatMessages,
+        temperature: chatOptions.temperature,
+        maxTokens: chatOptions.maxOutputTokens,
+      };
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      signal,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || `HTTP ${response.status}`);
+    }
+    if (!response.body) throw new Error('浏览器没有收到流式响应');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let streamDone = false;
+    let text = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const payload = trimmed.slice(5).trim();
+        if (!payload) continue;
+        if (payload === '[DONE]') {
+          streamDone = true;
+          break;
+        }
+        try {
+          const json = JSON.parse(payload);
+          const delta = json.choices?.[0]?.delta?.content ?? '';
+          if (delta) {
+            text += delta;
+            onDelta?.(delta);
+          }
+        } catch {
+          // Ignore keepalive / partial SSE payloads.
+        }
+      }
+
+      if (streamDone) break;
+    }
+
+    if (streamDone) await reader.cancel().catch(() => {});
+    return text;
+  };
+
   const send = async (textArg) => {
     const text = String(textArg ?? draft).trim();
     if (!text || streaming || !data) return;
@@ -862,112 +979,54 @@ export default function App() {
     abortRef.current = controller;
 
     try {
-      let url;
-      let headers;
-      let body;
+      const onDelta = (delta) => {
+        assistantText += delta;
+        setMessages((previous) =>
+          previous.map((message) =>
+            message.id === assistantId
+              ? { ...message, text: message.text + delta }
+              : message,
+          ),
+        );
+      };
 
-      if (config.managed) {
-        if (!accountToken) throw new Error('托管模式需要先兑换额度');
-        url = `${API_BASE}/api/chat`;
-        headers = {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accountToken}`,
-        };
-        body = {
-          managed: true,
-          provider: config.provider,
-          model: config.model,
-          messages: ctx.messages,
-          temperature: chatOptions.temperature,
-          maxTokens: chatOptions.maxOutputTokens,
-        };
-      } else if (config.directDeepseek) {
-        if (!config.apiKey) throw new Error('直连模式需要先填 DeepSeek API key');
-        url = 'https://api.deepseek.com/chat/completions';
-        headers = {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.apiKey}`,
-        };
-        body = {
-          model: config.model,
-          messages: ctx.messages,
-          stream: true,
-          temperature: chatOptions.temperature,
-          max_tokens: chatOptions.maxOutputTokens,
-          thinking: { type: 'disabled' },
-        };
-      } else {
-        if (!API_BASE) {
-          throw new Error('没有配置 gateway，请开启 DeepSeek 直连或设置 VITE_API_BASE');
+      assistantText = await requestCompletion(
+        ctx.messages,
+        controller.signal,
+        onDelta,
+      );
+
+      if (isOutOfCharacter(assistantText)) {
+        setMessages((previous) =>
+          previous.map((message) =>
+            message.id === assistantId
+              ? { ...message, text: '', pending: true }
+              : message,
+          ),
+        );
+        assistantText = '';
+        const repairMessages = [
+          ...ctx.messages,
+          { role: 'system', content: repairInstruction(data.persona.name) },
+        ];
+        assistantText = await requestCompletion(
+          repairMessages,
+          controller.signal,
+          onDelta,
+        );
+
+        if (isOutOfCharacter(assistantText)) {
+          assistantText =
+            sanitizeOoc(assistantText) || '（他看了你一眼，没有接话。）';
+          setMessages((previous) =>
+            previous.map((message) =>
+              message.id === assistantId
+                ? { ...message, text: assistantText, pending: false }
+                : message,
+            ),
+          );
         }
-        url = `${API_BASE}/api/chat`;
-        headers = { 'Content-Type': 'application/json' };
-        body = {
-          provider: config.provider,
-          model: config.model,
-          apiKey: config.useServerKey ? undefined : config.apiKey,
-          messages: ctx.messages,
-          temperature: chatOptions.temperature,
-          maxTokens: chatOptions.maxOutputTokens,
-        };
       }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        signal: controller.signal,
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(detail || `HTTP ${response.status}`);
-      }
-      if (!response.body) throw new Error('浏览器没有收到流式响应');
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let streamDone = false;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data:')) continue;
-          const payload = trimmed.slice(5).trim();
-          if (!payload) continue;
-          if (payload === '[DONE]') {
-            streamDone = true;
-            break;
-          }
-          try {
-            const json = JSON.parse(payload);
-            const delta = json.choices?.[0]?.delta?.content ?? '';
-            if (delta) {
-              assistantText += delta;
-              setMessages((previous) =>
-                previous.map((message) =>
-                  message.id === assistantId
-                    ? { ...message, text: message.text + delta }
-                    : message,
-                ),
-              );
-            }
-          } catch {
-            // Ignore keepalive / partial SSE payloads.
-          }
-        }
-
-        if (streamDone) break;
-      }
-
-      if (streamDone) await reader.cancel().catch(() => {});
 
       setMessages((previous) =>
         previous.map((message) =>
@@ -1589,6 +1648,7 @@ export default function App() {
         <SettingsPage
           accountToken={accountToken}
           credits={credits}
+          expiresAt={expiresAt}
           redeemInput={redeemInput}
           setRedeemInput={setRedeemInput}
           onRedeem={redeemAccount}
@@ -1877,6 +1937,7 @@ function MemoryPage({ data, chatOptions, onUpdateMemory, onRemoveMemory }) {
 function SettingsPage({
   accountToken,
   credits,
+  expiresAt,
   redeemInput,
   setRedeemInput,
   onRedeem,
@@ -1892,6 +1953,11 @@ function SettingsPage({
             {accountToken ? (
               <>
                 剩余 <strong>{credits ?? '…'}</strong> 次
+                <span className="managed-expiry">
+                  {expiresAt
+                    ? ` · ${new Date(expiresAt).toLocaleDateString('zh-CN')} 到期`
+                    : ' · 永久有效'}
+                </span>
               </>
             ) : (
               '尚未兑换'

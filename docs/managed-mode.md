@@ -31,11 +31,19 @@ npm.cmd run build
 ## 兑换码
 
 ```powershell
-# 生成 20 个 500 次的码到文件
-node scripts/codes.mjs create --credits 500 --count 20 --out codes-500.txt
+# 查看套餐
+node scripts/codes.mjs plans
+
+# 生成月包：1200/3000/5000 次，30 天有效
+node scripts/codes.mjs create --plan monthly9 --count 20 --out codes-monthly9.txt
+node scripts/codes.mjs create --plan monthly19 --count 20 --out codes-monthly19.txt
+node scripts/codes.mjs create --plan monthly29 --count 20 --out codes-monthly29.txt
+
+# 不过期随心包
+node scripts/codes.mjs create --plan topup --count 20 --out codes-topup.txt
 
 # 把本地生成的码导入生产 DB（换服务器/换 DB 时用）
-node scripts/codes.mjs import --file release/codes-3000.txt --credits 3000
+node scripts/codes.mjs import --file codes-monthly19.txt --credits 3000 --days 30
 
 # 查看统计
 node scripts/codes.mjs stats
@@ -48,6 +56,8 @@ node scripts/codes.mjs add --token whale_xxx --credits 500
 ```
 
 - 一个码只能用一次，兑换后生成一个 `whale_...` account token。
+- 月包是 30 天有效的 grant；到期后余额自动不算，`/api/balance` 返回 `expiresAt`；随心包 `days=0` 不过期。
+- 再买月包会新增 grant 并延长到新的最晚到期日，不会吞掉剩余次数。
 - token 存在用户设备，丢了无法找回；MVP 可接受。
 - `data/billing.db` 已在 `.gitignore`，**要备份**。
 

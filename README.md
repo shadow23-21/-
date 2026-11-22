@@ -210,7 +210,8 @@ powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -GatewayUrl h
 
 - 方案与成本：[docs/monetization.md](docs/monetization.md)
 - 建议零售价：[store/pricing.md](store/pricing.md)
-- 结论：BYOK 免费 + 托管额度收费；先卖兑换码（爱发电/微店），有量后再接微信/支付宝/Google Play Billing/Apple IAP。
+- 冷启动/宣传：[docs/growth.md](docs/growth.md)
+- 结论：托管额度收费（9.9/19.9/29.9 月包 + 不过期随心包）；先卖兑换码（微店），有量后再接微信/支付宝/Google Play Billing/Apple IAP。
 - 不卖原始 API key；用户拿到的是应用内额度和 account token。
 
 ## 数据安全

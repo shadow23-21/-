@@ -179,7 +179,10 @@ function handleBalance(request, response) {
     sendJson(response, 401, { error: '账号 token 无效，请重新兑换' });
     return;
   }
-  sendJson(response, 200, { credits: account.credits });
+  sendJson(response, 200, {
+    credits: account.credits,
+    expiresAt: account.expiresAt,
+  });
 }
 
 async function handleChat(request, response) {

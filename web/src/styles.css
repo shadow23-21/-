@@ -603,6 +603,11 @@ select {
   font-size: 24px;
 }
 
+.managed-expiry {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .character-toolbar {
   display: flex;
   max-width: 620px;
