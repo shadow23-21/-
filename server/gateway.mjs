@@ -3,7 +3,10 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { extractStoryBible } from '../src/memory/extract.mjs';
+import {
+  deterministicBible,
+  extractStoryBible,
+} from '../src/memory/extract.mjs';
 import {
   consumeCredit,
   getAccount,
@@ -67,7 +70,7 @@ async function readBody(request) {
   let size = 0;
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > 8 * 1024 * 1024) throw new Error('Request body too large');
+    if (size > 32 * 1024 * 1024) throw new Error('Request body too large');
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString('utf8');
@@ -120,14 +123,28 @@ async function handleExtract(request, response) {
   }
 
   try {
-    const bible = await extractStoryBible(events, {
-      title: payload.title ?? '未命名故事',
-      envFile: path.join(ROOT, '.env'),
-      maxChars: Number(payload.maxChars ?? 12000),
-      provider: payload.provider ?? 'deepseek',
-      fallbackProvider: payload.fallbackProvider ?? 'zhipu',
-    });
-    sendJson(response, 200, bible);
+    const title = payload.title ?? '未命名故事';
+    try {
+      const bible = await extractStoryBible(events, {
+        title,
+        envFile: path.join(ROOT, '.env'),
+        maxChars: Number(payload.maxChars ?? 12000),
+        maxChunks: Number(payload.maxChunks ?? 12),
+        provider: payload.provider ?? 'deepseek',
+        fallbackProvider: payload.fallbackProvider ?? 'zhipu',
+      });
+      sendJson(response, 200, bible);
+    } catch (error) {
+      // A giant log should still be importable even if the LLM extraction
+      // times out or gets rate-limited.
+      const fallback = deterministicBible(events, { title });
+      fallback.meta = {
+        ...(fallback.meta ?? {}),
+        fallback: true,
+        fallbackReason: error.message,
+      };
+      sendJson(response, 200, fallback);
+    }
   } catch (error) {
     sendJson(response, 500, { error: error.message });
   }

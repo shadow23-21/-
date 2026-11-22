@@ -120,6 +120,14 @@ server/gateway.mjs   本地 gateway：静态文件 + /api/chat 透传
 - 记忆页时间线的 `第X天` 标签也会清空；不再显示天数。
 - 删除消息会同时从消息列表和检索用 events 中移除。
 
+## 导出与超大文本
+
+- 角色页「导出全部」生成 ZIP：`whale-memory-export.json` + 每角色 `.json` 角色包 + 可读 `.txt` 对话。
+- Android 用 `@capacitor/filesystem` 写入缓存，再用 `@capacitor/share` 调系统分享/保存；Web 直接下载。
+- ZIP 里的 `whale-memory-export.json` 可以再导入鲸忆（会追加角色，不覆盖）。
+- 导入文件上限 24MB；解析后显示条数/字数；抽取最多 12 个分片（每片约 12k 字）。
+- LLM 抽取失败时 gateway 返回 deterministic bible，导入仍完成，聊天记录不丢。
+
 ## 当前限制
 
 - zip 必须包含 `conversation.json`（官方导出解压后就是这个结构）；缺这个文件会报错。

@@ -1,3 +1,7 @@
+import { Capacitor } from '@capacitor/core';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
 export const CHARACTER_PACK_FORMAT = 'whale-memory-character';
 
 export function createCharacterPack({ character, name, title, source }) {
@@ -37,10 +41,34 @@ export function parseCharacterPack(text) {
   };
 }
 
-export function downloadCharacterPack(pack, filename) {
-  const blob = new Blob([`${JSON.stringify(pack, null, 2)}\n`], {
-    type: 'application/json',
-  });
+function toBase64(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
+  }
+  return btoa(binary);
+}
+
+export async function downloadCharacterPack(pack, filename) {
+  const text = `${JSON.stringify(pack, null, 2)}\n`;
+  if (Capacitor.isNativePlatform()) {
+    const result = await Filesystem.writeFile({
+      path: filename,
+      data: toBase64(text),
+      directory: Directory.Cache,
+    });
+    await Share.share({
+      title: '鲸忆角色包',
+      text: '鲸忆角色包',
+      url: result.uri,
+      dialogTitle: '保存或分享角色包',
+    });
+    return;
+  }
+
+  const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

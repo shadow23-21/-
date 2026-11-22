@@ -409,7 +409,17 @@ export async function extractStoryBible(events, options = {}) {
   const provider = options.provider ?? 'deepseek';
   const model = options.model ?? PROVIDERS[provider]?.model;
   const title = options.title ?? events[0]?.title ?? '未命名故事';
-  const chunks = chunkEvents(events, options.maxChars ?? 12000);
+  const allChunks = chunkEvents(events, options.maxChars ?? 12000);
+  const maxChunks = Math.max(1, Number(options.maxChunks) || 12);
+  let chunks = allChunks;
+  if (allChunks.length > maxChunks) {
+    const indices = new Set([0, allChunks.length - 1]);
+    const step = allChunks.length / maxChunks;
+    for (let index = 0; index < maxChunks; index += 1) {
+      indices.add(Math.min(allChunks.length - 1, Math.floor(index * step)));
+    }
+    chunks = [...indices].sort((left, right) => left - right).map((index) => allChunks[index]);
+  }
   const bibles = [];
 
   for (const chunk of chunks) {
@@ -426,6 +436,7 @@ export async function extractStoryBible(events, options = {}) {
     provider,
     model,
     chunks: chunks.length,
+    totalChunks: allChunks.length,
     generatedAt: new Date().toISOString(),
   };
   return merged;

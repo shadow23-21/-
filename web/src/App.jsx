@@ -8,6 +8,11 @@ import {
   createCharacterPack,
   downloadCharacterPack,
 } from './lib/character-pack.js';
+import {
+  buildExportBundle,
+  downloadExportBundle,
+  readExportBundle,
+} from './lib/export-all.js';
 import { API_BASE } from './lib/config.js';
 import { importFile, readCharacterPack } from './lib/import-client.js';
 import {
@@ -578,7 +583,23 @@ export default function App() {
     setInstallPrompt(null);
   };
 
-  const exportActive = () => {
+  const exportAll = async () => {
+    const characters = snapshotCharacters();
+    if (characters.length === 0) {
+      setError('还没有可以导出的角色');
+      return;
+    }
+    try {
+      const bytes = buildExportBundle({ characters });
+      const stamp = new Date().toISOString().slice(0, 10);
+      await downloadExportBundle(bytes, `鲸忆-全部导出-${stamp}.zip`);
+      setImportStatus(`已导出 ${characters.length} 个角色`);
+    } catch (exportError) {
+      setError(`导出失败：${exportError.message}`);
+    }
+  };
+
+  const exportActive = async () => {
     if (!data) return;
     const pack = createCharacterPack({
       character: {
@@ -590,8 +611,12 @@ export default function App() {
         messages,
       },
     });
-    downloadCharacterPack(pack, `${data.persona.name}-鲸忆角色.json`);
-    setImportStatus('角色包已导出');
+    try {
+      await downloadCharacterPack(pack, `${data.persona.name}-鲸忆角色.json`);
+      setImportStatus('角色包已导出');
+    } catch (exportError) {
+      setError(`导出失败：${exportError.message}`);
+    }
   };
 
   const renameActive = () => {
@@ -672,11 +697,42 @@ export default function App() {
 
   const handleFile = async (file) => {
     if (!file || importing) return;
+    if (file.size > 24 * 1024 * 1024) {
+      setError('文件超过 24MB，请先拆分再导入');
+      return;
+    }
     setImporting(true);
     setImportStatus('解析中…');
     setError('');
 
     try {
+      const fullExport = await readExportBundle(file).catch(() => null);
+      if (fullExport?.characters?.length > 0) {
+        const imported = fullExport.characters.map((pack) =>
+          makeCharacter({
+            bible: pack.bible,
+            events: pack.events,
+            messages: pack.messages,
+            source: pack.source,
+          }),
+        );
+        imported.forEach((character, index) => {
+          character.name = fullExport.characters[index].name;
+          character.title = fullExport.characters[index].title;
+        });
+        const next = {
+          ...library,
+          activeId: imported[0].id,
+          characters: [...imported, ...snapshotCharacters()],
+        };
+        setLibrary(next);
+        await saveLibrary(next);
+        applyCharacter(imported[0]);
+        setImportStatus(`已导入 ${imported.length} 个角色`);
+        setView('chat');
+        return;
+      }
+
       const pack = await readCharacterPack(file).catch(() => null);
       if (pack) {
         const character = makeCharacter({
@@ -700,7 +756,16 @@ export default function App() {
         return;
       }
 
-      const { result, bible } = await importFile(file);
+      const { result, bible } = await importFile(file, (stage) => {
+        if (stage.stage === 'parsed') {
+          setImportStatus(
+            `已解析 ${stage.events} 条消息（约 ${Math.max(
+              1,
+              Math.round(stage.chars / 1000),
+            )}k 字），正在整理…`,
+          );
+        }
+      });
       const selected = cleanTextItems(result.selected).map((event) => ({
         ...event,
         imported: true,
@@ -1415,6 +1480,9 @@ export default function App() {
               <p className="page-sub">没有匹配的角色。</p>
             )}
             <div className="page-actions">
+              <button className="ghost" onClick={exportAll}>
+                导出全部
+              </button>
               <button className="ghost" onClick={openNewCharacter}>
                 新建角色
               </button>

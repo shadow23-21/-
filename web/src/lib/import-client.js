@@ -40,11 +40,15 @@ export async function readCharacterPack(file) {
   return parseCharacterPack(text);
 }
 
-export async function requestStoryBible(events, title) {
+export async function requestStoryBible(events, title, options = {}) {
   const response = await fetch(`${API_BASE}/api/extract`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ events, title }),
+    body: JSON.stringify({
+      events,
+      title,
+      maxChunks: Number(options.maxChunks ?? 12),
+    }),
   });
   if (!response.ok) {
     const detail = await response.text();
@@ -53,13 +57,19 @@ export async function requestStoryBible(events, title) {
   return response.json();
 }
 
-export async function importFile(file) {
+export async function importFile(file, onStage = () => {}) {
   const result = await parseImportFile(file);
   if (result.selected.length === 0) {
     throw new Error('没有识别到选中的消息');
   }
   const title =
     result.selected[0]?.title || file.name.replace(/\.[^.]+$/, '') || '未命名故事';
-  const bible = await requestStoryBible(result.selected, title);
+  const chars = result.selected.reduce(
+    (sum, event) => sum + String(event.text ?? '').length,
+    0,
+  );
+  onStage({ stage: 'parsed', events: result.selected.length, chars });
+  const bible = await requestStoryBible(result.selected, title, { maxChunks: 12 });
+  onStage({ stage: 'extracted', events: result.selected.length, chars });
   return { result, bible };
 }

@@ -44,6 +44,8 @@
 - [x] 删除消息里的 `（第X天）` 前缀
 - [x] 消息复制/删除、回到底部
 - [x] 语音输入：Android 系统语音引擎 + 浏览器 Web Speech 兜底
+- [x] 一键导出全部：ZIP（完整 JSON + 每角色可读 txt），Android 走系统分享/保存
+- [x] 大文本导入：最多 12 个抽取分片 + 失败回退 deterministic bible + 进度提示
 - [x] Dockerfile + docker-compose，一键部 gateway
 - [x] 商店素材包 + 上架/合规清单（`store/`）
 - [x] 变现方案：BYOK + 托管额度，先兑换码后支付/IAP（`docs/monetization.md`）
@@ -108,10 +110,12 @@ node server/gateway.mjs
 - 支持安装到桌面：manifest + standalone + service worker；Chrome/Edge 角色页会出现「安装」，iOS Safari 用分享 → 添加到主屏幕。
 - 每条消息右上角「复制 / 记住 / 删除」；长聊天有「↓ 最新」回到底部。
 - 输入框右侧麦克风：语音转文字追加到输入框；首次用 Android 系统语音引擎会弹一次授权。
-- 语音回复（TTS）暂未接；声线偏好和 TTS 方案见 [docs/voice.md](docs/voice.md)。
+- 语音回复（TTS）暂未接；语C 以文字为主、语音是补充，调研见 [docs/voice.md](docs/voice.md)。
 - 新建角色可填别名、年龄、外貌、性格、习惯、背景、角色定位、双方称呼、边界、未解决矛盾、初始长期记忆、未结束的线和开场白。
 - 导入/历史消息里的 `（第X天）` 前缀会在加载时自动去掉。
 - 记忆页「导出」把当前角色打成 `.json` 角色包（story bible + events + messages）；「导入新角色」会自动识别角色包。
+- 角色页「导出全部」打成一个 ZIP：`whale-memory-export.json` + 每角色 `.json` + 可读 `.txt`；Android 直接调系统分享/保存。
+- 大文本导入会显示「已解析 N 条 / 约 Xk 字」，抽取最多 12 个分片；LLM 失败时回退 deterministic bible，不丢记录。
 - 上下文预算固定在代码内（默认 1500）；超预算时先裁往事，再裁长期记忆，最后裁旧对话。
 - App 名「鲸忆」，Android 图标是蓝紫渐变 + 鲸字。
 - 「导入新角色」在角色列表；支持 **DeepSeek 官方 `.zip` 直接导入**（自动找 `conversation.json`），也支持 `.json` / `.jsonl` / `.txt`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。

@@ -8,6 +8,25 @@
 - 语音结果追加到当前输入框，不会覆盖已打的字；发送前自动停止倾听。
 - 结果不会自动发送，用户可改完再发。
 
+## 她们一般语音聊天吗？
+
+结论：**语C/同人女的主场是文字，语音是补充/高级功能，不是刚需。**
+
+- 语C 的定义就是“用文字代替要说的话”，通过对语言、动作、心理、环境的描写来演绎；声音扮演是另一条分支（CV/声音 cos），不是语C 本体。[知乎讨论](https://www.zhihu.com/question/290880002)
+- 语擦服务同样“主要凭文字描写及对话来模拟角色言行”；近年才延伸出声音扮演，且声音服务通常客单价更高。[南方+](https://static.nfnews.com/content/202608/27/c12760649.html)
+- 语C 的主要阵地仍是 QQ/微信文字对戏；语音更多用于“声音扮演/陪聊/哄睡”等细分场景。
+- 海外 AI 角色产品把语音当高级功能：Dewy Chat 的语音通话/语音条是“沉浸/付费”变现点，不是基础聊天方式。[Data17](https://www.sgpjbg.com/labelsyh/youxihualiucunyuwebyouxiandafa.html)
+- Character.AI 的 Character Calls 是免费附加功能，核心仍是文字角色对话。[TechRadar](https://www.techradar.com/computing/artificial-intelligence/characterai-lets-you-talk-to-your-favorite-synthetic-people-on-the-phone-which-isnt-weird-at-all)
+- 星野支持文字/语音/视频多模态，但语音是沉浸能力之一，不是唯一入口。[百度百科](https://baike.baidu.com/item/%E6%98%9F%E9%87%8E/63656793)
+- 更大的趋势：传统语音通话在下降，用户更偏文字/异步语音；AI 语音更多是“输入/交互方式”，不是聊天主体。[TechNews](https://technews.tw/ai-agent/study-finds-people-are-talking-less-over-time/5606/)
+
+对我们的意义：
+
+- **不要为了“别人有语音”就上昂贵的 TTS**；我们的优势是便宜。
+- 语音输入（免费、系统 ASR）值得做，已经做了。
+- 语音回复应作为**可选加价项**：按次扣 1 次或单独语音包，不进 19.9 基础套餐。
+- 真要做，先做 4 个预设音色，不做克隆。
+
 ## 她们喜欢什么男主声音（公开资料，非我们用户数据）
 
 ### 常见偏好
