@@ -49,6 +49,9 @@ function loadEnv(file) {
 }
 
 const env = loadEnv(path.join(ROOT, '.env'));
+// Docker/Railway inject secrets as process env; local dev uses .env.
+if (process.env.DEEPSEEK_API_KEY) env.DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+if (process.env.ZHIPU_API_KEY) env.ZHIPU_API_KEY = process.env.ZHIPU_API_KEY;
 
 function sendJson(response, status, payload) {
   const body = JSON.stringify(payload);
