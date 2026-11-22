@@ -20,6 +20,5 @@ COPY src ./src
 COPY scripts ./scripts
 COPY --from=webbuild /app/web/dist ./web/dist
 RUN mkdir -p /data
-VOLUME ["/data"]
 EXPOSE 8787
 CMD ["node", "server/gateway.mjs"]
