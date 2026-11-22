@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildContext,
   estimateCostCNY,
+  estimateTokens,
   memoryLines,
   retrieve,
   tokenize,
@@ -174,6 +175,44 @@ test('buildContext respects a tight token budget', () => {
   assert.ok(context.budgetUsedPct <= 100);
   assert.ok(context.memories.length < 10);
   assert.ok(context.retrieved.length < events.length);
+});
+
+test('estimateTokens is conservative for Chinese', () => {
+  assert.ok(estimateTokens('雨'.repeat(150)) >= 90);
+  assert.ok(estimateTokens('hello world') < 10);
+});
+
+test('long persona fields and recent messages keep persona and memory anchors', () => {
+  const longBible = {
+    ...bible,
+    persona: {
+      ...bible.persona,
+      appearance: '白大褂。'.repeat(400),
+      background: '医生。'.repeat(400),
+    },
+    relationship: {
+      ...bible.relationship,
+      boundaries: ['不能让顾青误会'],
+    },
+  };
+  const longMessages = Array.from({ length: 6 }, (_, index) => ({
+    role: index % 2 === 0 ? 'user' : 'assistant',
+    text: `第 ${index} 条很长的日常。${'雨夜。'.repeat(500)}`,
+  }));
+
+  const context = buildContext({
+    bible: longBible,
+    events,
+    messages: longMessages,
+    userText: '你还记得周末要去看海吗？',
+  });
+
+  assert.match(context.messages[0].content, /沈砚/);
+  assert.match(context.messages[0].content, /保持角色一致性/);
+  assert.match(context.messages[0].content, /不能让顾青误会/);
+  assert.ok(context.memories.length >= 1, 'core memory should survive trimming');
+  assert.match(context.messages[1].content, /看海/);
+  assert.ok(context.estimatedInputTokens > 0);
 });
 
 test('cost estimate is positive', () => {

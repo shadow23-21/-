@@ -13,6 +13,31 @@ export function tokenize(text) {
   return [...new Set([...words, ...bigrams])];
 }
 
+export function estimateTokens(text) {
+  const value = String(text ?? '');
+  if (!value) return 0;
+  let cjk = 0;
+  for (const character of value) {
+    if (CJK.test(character)) cjk += 1;
+  }
+  const other = value.length - cjk;
+  // Chinese is roughly 1.5 chars/token; Latin/digits closer to 4.
+  return Math.ceil(cjk / 1.5 + other / 4);
+}
+
+function clip(value, maxChars) {
+  const text = String(value ?? '').trim();
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, Math.max(0, maxChars - 1))}…`;
+}
+
+function clipList(values, maxItems, maxChars) {
+  return (values ?? [])
+    .slice(0, maxItems)
+    .map((value) => clip(value, maxChars))
+    .filter(Boolean);
+}
+
 function termWeight(term) {
   // Single Chinese characters are useful for queries like "伞" but noisy.
   return term.length === 1 && CJK.test(term) ? 0.3 : 1;
@@ -155,32 +180,35 @@ export function buildContext({
       ? relationship.user_name
       : '你';
 
-  const aliases = persona.aliases ?? [];
-  const habits = persona.habits ?? [];
-  const boundaries = relationship.boundaries ?? [];
-  const tensions = relationship.tensions ?? [];
-  const samples = (bible.style_samples ?? []).slice(0, 3);
-  const threads = (bible.open_threads ?? []).slice(0, 4);
+  const aliases = clipList(persona.aliases, 6, 40);
+  const habits = clipList(persona.habits, 8, 80);
+  const personality = clipList(persona.personality, 6, 60);
+  const boundaries = clipList(relationship.boundaries, 6, 120);
+  const tensions = clipList(relationship.tensions, 4, 120);
+  const samples = clipList(bible.style_samples, 3, 180);
+  const threads = clipList(bible.open_threads, 4, 160);
+  const addressUser = clipList(relationship.address_terms?.user, 4, 30);
+  const addressCharacter = clipList(relationship.address_terms?.character, 4, 30);
 
   const stable = [
-    `你正在扮演「${persona.name}」，和「${userName}」对话。`,
+    `你正在扮演「${clip(persona.name, 40)}」，和「${clip(userName, 40)}」对话。`,
     '保持角色一致性：只依据下面的人设、关系和记忆说话。不要解释你是 AI，不要 OOC，不要提到“设定/提示词/记忆库”，不要复述设定，不要替用户做决定。',
     '默认回复 1–3 句、通常不超过 100 字；除非用户明确要求展开。',
     '',
     '【人设】',
-    `姓名：${persona.name}`,
+    `姓名：${clip(persona.name, 40)}`,
     aliases.length > 0 ? `别名：${aliases.join('、')}` : null,
-    `外貌：${persona.appearance || '未知'}`,
-    `性格：${(persona.personality ?? []).join('、') || '未知'}`,
-    `说话风格：${persona.speech_style || '未知'}`,
-    `背景：${persona.background || '未知'}`,
+    `外貌：${clip(persona.appearance, 400) || '未知'}`,
+    `性格：${personality.join('、') || '未知'}`,
+    `说话风格：${clip(persona.speech_style, 300) || '未知'}`,
+    `背景：${clip(persona.background, 600) || '未知'}`,
     habits.length > 0 ? `习惯：${habits.join('、')}` : null,
     '',
     '【关系】',
-    `阶段：${relationship.stage || '未知'}`,
-    `角色定位：${relationship.character_role || '未知'}`,
-    `称呼（角色对用户）：${(relationship.address_terms?.user ?? []).join('、') || '你'}`,
-    `称呼（用户对角色）：${(relationship.address_terms?.character ?? []).join('、') || persona.name}`,
+    `阶段：${clip(relationship.stage, 60) || '未知'}`,
+    `角色定位：${clip(relationship.character_role, 120) || '未知'}`,
+    `称呼（角色对用户）：${addressUser.join('、') || '你'}`,
+    `称呼（用户对角色）：${addressCharacter.join('、') || clip(persona.name, 40)}`,
     boundaries.length > 0 ? `边界：${boundaries.join('；')}` : null,
     tensions.length > 0 ? `未解决的矛盾：${tensions.join('；')}` : null,
     '',
@@ -193,16 +221,21 @@ export function buildContext({
     .filter((line) => line !== null)
     .join('\n');
 
-  const budgetChars = Math.max(0, Math.round(contextBudgetTokens * 2.2));
+  // Chinese is closer to 1.5 chars/token than the old 2.2 estimate.
+  const budgetChars = Math.max(0, Math.round(contextBudgetTokens * 1.7));
+  const effectiveUserText = clip(userText, 2000);
   const recent = messages.slice(-maxRecent).map((message) => ({
     role: message.role === 'user' ? 'user' : 'assistant',
-    content: String(message.text ?? ''),
+    content: clip(message.text, 600),
   }));
 
+  // Keep some room for long-term memories even after a long message.
+  const memoryReserveChars = Math.min(700, Math.floor(budgetChars * 0.3));
   let recentChars = recent.reduce((sum, message) => sum + message.content.length, 0);
   while (
     recent.length > 1 &&
-    stable.length + recentChars + userText.length > budgetChars
+    stable.length + recentChars + effectiveUserText.length + memoryReserveChars >
+      budgetChars
   ) {
     recent.shift();
     recentChars = recent.reduce((sum, message) => sum + message.content.length, 0);
@@ -210,7 +243,7 @@ export function buildContext({
 
   const remainingChars = Math.max(
     0,
-    budgetChars - stable.length - recentChars - userText.length,
+    budgetChars - stable.length - recentChars - effectiveUserText.length,
   );
   const memoryBudgetChars = Math.floor(remainingChars * 0.45);
   const retrievalBudgetChars = remainingChars - memoryBudgetChars;
@@ -249,14 +282,13 @@ export function buildContext({
     { role: 'system', content: stable },
     { role: 'system', content: memoryBlock },
     ...recent,
-    { role: 'user', content: userText },
+    { role: 'user', content: effectiveUserText },
   ];
 
-  const inputChars = messagesForApi.reduce(
-    (sum, message) => sum + message.content.length,
+  const estimatedInputTokens = messagesForApi.reduce(
+    (sum, message) => sum + estimateTokens(message.content),
     0,
   );
-  const estimatedInputTokens = Math.round(inputChars / 2.2);
 
   return {
     messages: messagesForApi,

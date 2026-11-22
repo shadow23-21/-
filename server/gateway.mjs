@@ -14,6 +14,7 @@ import {
   redeemCode,
   refundCredit,
 } from './billing.mjs';
+import { normalizeChatRequest } from './chat-limits.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'web', 'dist');
@@ -213,16 +214,23 @@ async function handleChat(request, response) {
   }
 
   const provider = payload.provider === 'zhipu' ? 'zhipu' : 'deepseek';
+  // Non-managed requests must bring their own key; never fall back to the
+  // server key, otherwise anyone can use our balance for free.
   const apiKey = managed
     ? provider === 'zhipu'
       ? env.ZHIPU_API_KEY
       : env.DEEPSEEK_API_KEY
-    : payload.apiKey ||
-      (provider === 'zhipu' ? env.ZHIPU_API_KEY : env.DEEPSEEK_API_KEY);
+    : payload.apiKey;
   if (!apiKey) {
     sendJson(response, managed ? 500 : 400, {
       error: `Missing API key for ${provider}. Put it in .env or the settings panel.`,
     });
+    return;
+  }
+
+  const normalized = normalizeChatRequest(payload, provider);
+  if (!normalized.ok) {
+    sendJson(response, 400, { error: normalized.error });
     return;
   }
 
@@ -235,20 +243,17 @@ async function handleChat(request, response) {
     reserved = true;
   }
 
-  const model =
-    payload.model || (provider === 'zhipu' ? 'glm-4.7-flash' : 'deepseek-flash');
-  const messages = Array.isArray(payload.messages) ? payload.messages : [];
   const upstreamUrl =
     provider === 'zhipu'
       ? 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
       : 'https://api.deepseek.com/chat/completions';
 
   const upstreamBody = {
-    model,
-    messages,
+    model: normalized.model,
+    messages: normalized.messages,
     stream: true,
-    temperature: Number(payload.temperature ?? 0.9),
-    max_tokens: Number(payload.maxTokens ?? 800),
+    temperature: normalized.temperature,
+    max_tokens: normalized.maxTokens,
   };
   // Both DeepSeek V4+ and GLM default to thinking mode. For roleplay chat we
   // want the final answer, not a long reasoning trace.

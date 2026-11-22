@@ -922,6 +922,10 @@ export default function App() {
   const send = async (textArg) => {
     const text = String(textArg ?? draft).trim();
     if (!text || streaming || !data) return;
+    if (text.length > 2000) {
+      setError('这条消息太长了，分两段发，避免记忆和人设被挤掉。');
+      return;
+    }
     if (!accountToken || credits === 0) {
       setQuotaNotice(true);
       return;
