@@ -26,13 +26,15 @@
 - [x] 浏览器 E2E：上传 fixture → 导入 → 聊天（`web/scripts/e2e.mjs`）
 - [x] Android 工程 + debug APK 构建通过（`web/android`）
 - [x] Redmi M332BF 安装/启动验证；主界面纯聊天，记忆/设置独立页面
-- [x] 默认省流：6 轮上下文 / 4 条往事 / 6 条长期记忆 / 输出 ≤500 tokens
+- [x] 默认省流：最近 6 条消息 / 4 条往事 / 6 条长期记忆 / 输出 ≤400 tokens
 - [x] 聊天记录持久化到 IndexedDB（刷新/重启恢复导入 + 后续对话）
 - [x] 多角色列表 + 切换；导入新角色不覆盖旧角色；角色搜索 / 改名
 - [x] 官方 `.zip` 直接导入（自动读 `conversation.json`）
 - [x] 新建空白角色（不导入也能直接聊）
 - [x] 消息「记住」+ 记忆页编辑/删除；手动记忆会进后续上下文
 - [x] 检索改为 BM25（IDF + 长度归一化 + 重要性兜底）
+- [x] 本地自动记忆：我叫/我喜欢/我们约定/第一次等事实免费入库
+- [x] 人设稳定：角色一致性提示 + 稳定前缀缓存 + 默认输出 ≤400 tokens
 - [x] 上下文 token 预算（默认 1500，可调；超预算先裁往事/记忆/旧对话）
 - [x] 角色包导出/导入（`.json`，含 story bible + 消息）
 - [x] App 名称「鲸忆」+ 自定义图标
@@ -43,7 +45,6 @@
 - [x] 新建角色完整字段：别名/年龄/外貌/性格/习惯/关系/称呼/边界/初始记忆/未结束的线
 - [x] 删除消息里的 `（第X天）` 前缀
 - [x] 消息复制/删除、回到底部
-- [x] 语音输入：Android 系统语音引擎 + 浏览器 Web Speech 兜底
 - [x] 一键导出全部：ZIP（完整 JSON + 每角色可读 txt），Android 走系统分享/保存
 - [x] 大文本导入：最多 12 个抽取分片 + 失败回退 deterministic bible + 进度提示
 - [x] Dockerfile + docker-compose，一键部 gateway
@@ -109,8 +110,6 @@ node server/gateway.mjs
 - 角色列表：每个角色独立的 story bible / 消息 / 记忆；支持搜索、排序（最近/名字/记忆数）、改名；「导入新角色」追加，不覆盖当前角色。
 - 支持安装到桌面：manifest + standalone + service worker；Chrome/Edge 角色页会出现「安装」，iOS Safari 用分享 → 添加到主屏幕。
 - 每条消息右上角「复制 / 记住 / 删除」；长聊天有「↓ 最新」回到底部。
-- 输入框右侧麦克风：语音转文字追加到输入框；首次用 Android 系统语音引擎会弹一次授权。
-- 语音回复（TTS）暂未接；语C 以文字为主、语音是补充，调研见 [docs/voice.md](docs/voice.md)。
 - 新建角色可填别名、年龄、外貌、性格、习惯、背景、角色定位、双方称呼、边界、未解决矛盾、初始长期记忆、未结束的线和开场白。
 - 导入/历史消息里的 `（第X天）` 前缀会在加载时自动去掉。
 - 记忆页「导出」把当前角色打成 `.json` 角色包（story bible + events + messages）；「导入新角色」会自动识别角色包。
@@ -121,7 +120,8 @@ node server/gateway.mjs
 - 「导入新角色」在角色列表；支持 **DeepSeek 官方 `.zip` 直接导入**（自动找 `conversation.json`），也支持 `.json` / `.jsonl` / `.txt`。导入会调 `/api/extract` 生成 story bible，并存 IndexedDB，刷新不丢。
 - 「新建角色」不导入也能用：填角色名、人设、关系、开场白，直接开始聊。
 - 抽取默认走 DeepSeek `deepseek-flash`，智谱 `glm-4.7-flash` 作为 fallback；智谱 429 时自动切换。
-- 默认省流：最近 6 轮 + 最多 4 条往事 + 6 条长期记忆 + 输出 ≤500 tokens；用户只看到「剩余次数」。
+- 默认省流：最近 6 条消息（约 3 轮）+ 最多 4 条往事 + 6 条长期记忆 + 输出 ≤400 tokens；用户只看到「剩余次数」。
+- 每轮用户话里自动抓「我叫/我喜欢/我们约定/第一次」等高信号事实，免费写入长期记忆，不额外调模型。
 - 托管 E2E：生成码后 `CODE=WHALE-... node web/scripts/e2e.mjs`（需要本地 gateway + Edge；先兑换再跑导入/聊天/记忆/持久化）。
 - 额度 E2E：`CODE=WHALE-... node web/scripts/e2e-managed.mjs`（兑换/余额/免 key 聊天/扣次）。
 

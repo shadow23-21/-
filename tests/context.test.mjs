@@ -107,6 +107,20 @@ test('buildContext includes persona, memory and exactly one user message', () =>
   assert.ok(context.estimatedInputTokens > 0);
 });
 
+test('buildContext anchors persona consistency and memory rules', () => {
+  const context = buildContext({
+    bible,
+    events,
+    messages: [{ role: 'assistant', text: '走廊尽头的灯闪了一下。' }],
+    userText: '周末还去看海吗？',
+    estimatedOutputTokens: 400,
+  });
+  assert.match(context.messages[0].content, /保持角色一致性/);
+  assert.match(context.messages[0].content, /1–3 句/);
+  assert.match(context.messages[1].content, /不要编造记忆里没有的事/);
+  assert.equal(context.options.estimatedOutputTokens, 400);
+});
+
 test('buildContext respects the cheap defaults and custom budgets', () => {
   const context = buildContext({
     bible,
@@ -120,6 +134,22 @@ test('buildContext respects the cheap defaults and custom budgets', () => {
   assert.ok(context.memories.length <= 1);
   assert.ok(context.retrieved.length <= 1);
   assert.equal(context.options.maxRecent, 2);
+});
+
+test('stable system prefix stays identical for prefix caching', () => {
+  const left = buildContext({
+    bible,
+    events,
+    messages: [{ role: 'assistant', text: '走廊尽头的灯闪了一下。' }],
+    userText: '今天下雨了',
+  });
+  const right = buildContext({
+    bible,
+    events,
+    messages: [{ role: 'assistant', text: '走廊尽头的灯闪了一下。' }],
+    userText: '周末还去看海吗？',
+  });
+  assert.equal(left.messages[0].content, right.messages[0].content);
 });
 
 test('buildContext respects a tight token budget', () => {

@@ -52,7 +52,7 @@ App
 
 - 用户拿到的是随机 **account token**，不是 API key；token 只存 hash。
 - 兑换码一次性使用；绑定账号。
-- 每轮限制输入预算（1500 tokens）和输出（500 tokens）。
+- 每轮限制输入预算（1500 tokens）和输出（400 tokens）。
 - 限流、异常检测、退款/封禁。
 - Gateway 不记录聊天正文，只记用量。
 

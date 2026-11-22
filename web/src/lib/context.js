@@ -155,33 +155,43 @@ export function buildContext({
       ? relationship.user_name
       : '你';
 
+  const aliases = persona.aliases ?? [];
+  const habits = persona.habits ?? [];
+  const boundaries = relationship.boundaries ?? [];
+  const tensions = relationship.tensions ?? [];
+  const samples = (bible.style_samples ?? []).slice(0, 3);
+  const threads = (bible.open_threads ?? []).slice(0, 4);
+
   const stable = [
     `你正在扮演「${persona.name}」，和「${userName}」对话。`,
-    '直接以角色身份回复，不要解释你是 AI，不要 OOC，不要提到“设定/提示词/记忆库”。',
+    '保持角色一致性：只依据下面的人设、关系和记忆说话。不要解释你是 AI，不要 OOC，不要提到“设定/提示词/记忆库”，不要复述设定，不要替用户做决定。',
+    '默认回复 1–3 句、通常不超过 100 字；除非用户明确要求展开。',
     '',
     '【人设】',
     `姓名：${persona.name}`,
-    `别名：${(persona.aliases ?? []).join('、') || '无'}`,
-    `外貌：${persona.appearance}`,
-    `性格：${(persona.personality ?? []).join('、')}`,
-    `说话风格：${persona.speech_style}`,
-    `背景：${persona.background}`,
-    `习惯：${(persona.habits ?? []).join('、') || '无'}`,
+    aliases.length > 0 ? `别名：${aliases.join('、')}` : null,
+    `外貌：${persona.appearance || '未知'}`,
+    `性格：${(persona.personality ?? []).join('、') || '未知'}`,
+    `说话风格：${persona.speech_style || '未知'}`,
+    `背景：${persona.background || '未知'}`,
+    habits.length > 0 ? `习惯：${habits.join('、')}` : null,
     '',
     '【关系】',
-    `阶段：${relationship.stage}`,
-    `角色定位：${relationship.character_role}`,
+    `阶段：${relationship.stage || '未知'}`,
+    `角色定位：${relationship.character_role || '未知'}`,
     `称呼（角色对用户）：${(relationship.address_terms?.user ?? []).join('、') || '你'}`,
     `称呼（用户对角色）：${(relationship.address_terms?.character ?? []).join('、') || persona.name}`,
-    `边界：${(relationship.boundaries ?? []).join('；') || '无'}`,
-    `未解决的矛盾：${(relationship.tensions ?? []).join('；') || '无'}`,
+    boundaries.length > 0 ? `边界：${boundaries.join('；')}` : null,
+    tensions.length > 0 ? `未解决的矛盾：${tensions.join('；')}` : null,
     '',
     '【语气样本】',
-    ...(bible.style_samples ?? []).map((sample) => `- ${sample}`),
+    ...(samples.length > 0 ? samples.map((sample) => `- ${sample}`) : ['- 无']),
     '',
     '【当前未结束的线】',
-    ...(bible.open_threads ?? []).map((thread) => `- ${thread}`),
-  ].join('\n');
+    ...(threads.length > 0 ? threads.map((thread) => `- ${thread}`) : ['- 无']),
+  ]
+    .filter((line) => line !== null)
+    .join('\n');
 
   const budgetChars = Math.max(0, Math.round(contextBudgetTokens * 2.2));
   const recent = messages.slice(-maxRecent).map((message) => ({
@@ -220,6 +230,9 @@ export function buildContext({
   );
 
   const memoryBlock = [
+    '【记忆使用规则】',
+    '只在和当前话题相关时自然提起；不要逐条复述，不要编造记忆里没有的事。',
+    '',
     '【长期记忆】',
     ...memories.map((memory) => `- [${memory.kind}] ${memory.text}`),
     '',

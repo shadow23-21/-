@@ -54,9 +54,7 @@ try {
       ?.click();
   });
   await page.waitForSelector('.composer textarea');
-  if (!(await page.$('.mic-btn'))) throw new Error('voice input button missing');
   console.log('redeem: ok');
-  console.log('mic: ok');
 
   const fileInput = await page.$('input[type=file]');
   await fileInput.uploadFile(fixture);
