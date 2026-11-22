@@ -3,6 +3,7 @@ WORKDIR /app/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
+COPY src ../src
 ARG VITE_API_BASE=""
 ENV VITE_API_BASE=${VITE_API_BASE}
 ENV VITE_DIRECT_DEEPSEEK=false
