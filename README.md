@@ -213,6 +213,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1 -GatewayUrl h
 - 冷启动/宣传：[docs/growth.md](docs/growth.md)
 - 小红书现成文案：[store/xiaohongshu.md](store/xiaohongshu.md)
 - 分享/安装/闲鱼发货：[docs/share.md](docs/share.md)
+- 确保兑换成功：[docs/redeem-checklist.md](docs/redeem-checklist.md)
 - 结论：托管额度收费（9.9/19.9/29.9 月包 + 不过期随心包）；先卖兑换码（微店），有量后再接微信/支付宝/Google Play Billing/Apple IAP。
 - 不卖原始 API key；用户拿到的是应用内额度和 account token。
 

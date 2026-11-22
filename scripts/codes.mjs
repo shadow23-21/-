@@ -9,6 +9,7 @@ import {
   importCodes,
   listCodes,
   openBilling,
+  verifyCodes,
 } from '../server/billing.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -62,6 +63,19 @@ try {
       .filter(Boolean);
     const inserted = importCodes(db, codes, credits, days);
     console.log(`imported ${inserted}/${codes.length} codes (days: ${days || 'no expiry'})`);
+  } else if (command === 'verify') {
+    const file = arg('file', '');
+    const credits = Number(arg('credits', 500));
+    const days = Number(arg('days', 0));
+    if (!file) throw new Error('usage: node scripts/codes.mjs verify --file codes.txt --credits 1200 --days 30');
+    const codes = fs
+      .readFileSync(file, 'utf8')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const result = verifyCodes(db, codes, credits, days);
+    console.log(JSON.stringify(result, null, 2));
+    if (!result.ok) process.exitCode = 1;
   } else if (command === 'plans') {
     console.table(
       Object.entries(PLANS).map(([name, plan]) => ({
@@ -88,6 +102,7 @@ try {
   create --credits 500 --count 20 [--days 30] [--out codes.txt]
   create --plan monthly19 --count 20 [--out codes.txt]
   import --file codes.txt --credits 3000 [--days 30]
+  verify --file codes.txt --credits 1200 --days 30
   plans
   stats
   list [--limit 50]

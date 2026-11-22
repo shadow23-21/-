@@ -4,6 +4,7 @@
 
 - 正式分发包必须是 **签名 release APK**，不要发 debug 包。
 - 必须先把 gateway 部署到公网 HTTPS，并用 `-GatewayUrl` 重新构建；否则别人装了也兑换不了。
+- 上架前按 [redeem-checklist.md](redeem-checklist.md) 跑一遍：导入 → verify `ok:true` → 测试码兑换 → 正式 APK 再试。
 - iOS 暂时没有；只发安卓。
 
 ```powershell

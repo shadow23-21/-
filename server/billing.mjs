@@ -285,6 +285,43 @@ export function addCreditsByToken(db, token, amount, days = 0) {
   return true;
 }
 
+export function verifyCodes(db, codes, credits = 500, days = 0) {
+  const expectedCredits = Math.max(1, Number(credits) || 1);
+  const expectedDays = Math.max(0, Number(days) || 0);
+  const missing = [];
+  const used = [];
+  const mismatch = [];
+
+  for (const raw of codes) {
+    const code = normalizeCode(raw);
+    if (!code) continue;
+    const row = db
+      .prepare('SELECT code, credits, days, used_by FROM codes WHERE code = ?')
+      .get(code);
+    if (!row) {
+      missing.push(code);
+    } else if (row.used_by) {
+      used.push(code);
+    } else if (row.credits !== expectedCredits || row.days !== expectedDays) {
+      mismatch.push({
+        code,
+        expectedCredits,
+        actualCredits: row.credits,
+        expectedDays,
+        actualDays: row.days,
+      });
+    }
+  }
+
+  return {
+    total: codes.filter((code) => normalizeCode(code)).length,
+    ok: missing.length === 0 && used.length === 0 && mismatch.length === 0,
+    missing,
+    used,
+    mismatch,
+  };
+}
+
 export function billingStats(db) {
   const accounts = db.prepare('SELECT COUNT(*) AS n FROM accounts').get().n;
   const credits = db

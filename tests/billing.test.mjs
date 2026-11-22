@@ -14,6 +14,7 @@ import {
   openBilling,
   redeemCode,
   refundCredit,
+  verifyCodes,
 } from '../server/billing.mjs';
 
 test('redeem, consume, refund and stats', () => {
@@ -57,6 +58,34 @@ test('redeem, consume, refund and stats', () => {
       codes: 2,
       used: 2,
     });
+  } finally {
+    db.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('verifyCodes catches missing, used and mismatched codes', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'whale-billing-verify-'));
+  const db = openBilling(path.join(dir, 'billing.db'));
+
+  try {
+    const [first, second] = createCodes(db, 1200, 2, 30);
+    const good = verifyCodes(db, [first, second], 1200, 30);
+    assert.equal(good.ok, true);
+    assert.equal(good.total, 2);
+
+    redeemCode(db, first);
+    const afterUse = verifyCodes(db, [first, second], 1200, 30);
+    assert.equal(afterUse.ok, false);
+    assert.deepEqual(afterUse.used, [first]);
+
+    const wrong = verifyCodes(db, [second], 3000, 30);
+    assert.equal(wrong.ok, false);
+    assert.equal(wrong.mismatch.length, 1);
+
+    const missing = verifyCodes(db, ['WHALE-NOTF-OUND-XXXX'], 1200, 30);
+    assert.equal(missing.ok, false);
+    assert.equal(missing.missing.length, 1);
   } finally {
     db.close();
     fs.rmSync(dir, { recursive: true, force: true });
